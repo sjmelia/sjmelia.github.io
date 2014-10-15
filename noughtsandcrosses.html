@@ -1,0 +1,163 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
+		<style>
+			body
+			{
+				font-family: Lobster;
+			}
+
+			#a
+			{
+				border: 1px black dashed;
+			}
+		</style>
+	</head>
+<body>
+	<h1>Noughts and crosses</h1>
+	<canvas id="a" width="300" height="300"></canvas>
+</body>
+
+<script>
+	function Scanvas(id)
+	{
+		this.canvas = document.getElementById(id);
+		this.context = this.canvas.getContext("2d");
+		this.width = this.canvas.width;
+		this.height = this.canvas.height;
+		this.pieceHeight = this.height / 3;
+		this.pieceWidth = this.width / 3;
+		var self = this;
+		this.canvas.addEventListener("click", function(e) { self.onClick(e); }, false);
+		this.marks = [0,0,0,0,0,0,0,0,0];
+
+		this.getCursorPosition = function(e) {			
+			var x;
+    			var y;
+    			if (e.pageX != undefined && e.pageY != undefined) {
+				x = e.pageX;
+				y = e.pageY;
+    			}
+    			else {
+				x = e.clientX + document.body.scrollLeft +
+            			document.documentElement.scrollLeft;
+				y = e.clientY + document.body.scrollTop +
+            			document.documentElement.scrollTop;
+    			}
+
+			x -= this.canvas.offsetLeft;
+			y -= this.canvas.offsetTop;
+
+    			var cell = [Math.floor(x/this.pieceWidth),
+                        	Math.floor(y/this.pieceHeight)];
+		    	return cell;
+		}
+
+		this.onClick = function(e) {
+			// Note user's move.
+			var cell = this.getCursorPosition(e);
+			var marksIndex = cell[0] * 3 + cell[1];
+			if (this.marks[marksIndex] != 0) {
+				return;
+			}
+			
+			this.marks[marksIndex] = 1;
+
+			// Check a move is possible
+			var movePossible = false;
+			for (var i = 0; i < this.marks.length; i++) {
+				if (this.marks[i] == 0) {
+					movePossible = true;
+				}
+			}
+			
+			if (!movePossible) {
+				return;
+			}
+
+			// computer moves.			
+			while (true) {
+				var move = Math.floor(Math.random() * this.marks.length);
+				if (this.marks[move] == 0) {
+					this.marks[move] = 2;
+					break;
+				}
+			}
+
+			// Update screen
+			this.render(cell[0], cell[1]);
+		}
+
+		this.render = function() {
+			this.renderGrid();
+			for (var i = 0; i < 9; i++)
+			{
+				var x = Math.floor(i / 3);
+				var y = i % 3;
+				if (this.marks[i] == 1)
+				{
+					this.renderNought(x, y);
+				}	
+				else if (this.marks[i] == 2)
+				{
+					this.renderCross(x, y);
+				}
+			}
+		}
+
+		this.renderGrid = function() {
+			for (var x = 0.5; x < this.width; x += this.pieceWidth)
+			{
+				this.context.moveTo(x, 0);
+				this.context.lineTo(x, this.height);
+			}
+
+			for (var y = 0.5; y < this.height; y += this.pieceHeight)
+			{
+				this.context.moveTo(0, y);
+				this.context.lineTo(this.width, y);
+			}
+			this.context.strokeStyle = "#eee";
+			this.context.stroke();
+		};
+
+		this.renderNought = function(x, y) {
+			this.context.beginPath();
+			var centreX = x * this.pieceWidth + (this.pieceWidth/2);
+			var centreY = y * this.pieceHeight + (this.pieceWidth/2);
+			this.context.arc(
+				centreX,
+				centreY,
+				(this.pieceHeight/2) - 20,
+				0,
+				Math.PI * 2,
+				false);
+			this.context.closePath();
+			this.context.strokeStyle = "#000";
+			this.context.stroke();
+		}
+
+		this.renderCross = function(x, y) {
+			var centreX = x * this.pieceWidth + (this.pieceWidth/2);
+			var centreY = y * this.pieceHeight + (this.pieceWidth/2);
+
+			this.context.moveTo(centreX - this.pieceWidth/2 + 20, centreY - this.pieceHeight/2 + 20);
+			this.context.lineTo(centreX + this.pieceWidth/2 - 20, centreY + this.pieceHeight/2 - 20);
+
+			this.context.moveTo(centreX + this.pieceWidth/2 - 20, centreY - this.pieceHeight/2 + 20);
+			this.context.lineTo(centreX - this.pieceWidth/2 + 20, centreY + this.pieceHeight/2 - 20);
+
+			this.context.strokeStyle = "#000";
+			this.context.stroke();
+		}
+	}
+
+	var sc = new Scanvas("a");
+	sc.renderGrid();
+//	sc.renderCross(1,1);
+//	sc.context.fillRect(50, 25, 150, 100);
+
+</script>
+
+</html>

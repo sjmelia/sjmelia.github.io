@@ -1,0 +1,188 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link href='http://fonts.googleapis.com/css?family=Smokum' rel='stylesheet' type='text/css'>
+		<style>
+			body
+			{
+				font-family: Smokum;
+			}
+			h1
+			{
+				text-transform: uppercase;
+			}
+
+			#a
+			{
+				border: 1px black dashed;
+			}
+		</style>
+	</head>
+<body>
+	<h1>Crosshairs</h1>
+	<canvas id="a" width="300" height="300"></canvas>
+</body>
+
+<script>
+	function Scanvas(id)
+	{
+		this.canvas = document.getElementById(id);
+		this.context = this.canvas.getContext("2d");
+		this.width = this.canvas.width;
+		this.height = this.canvas.height;
+
+		this.getCursorPosition = function(e) {			
+			var x;
+    			var y;
+    			if (e.pageX != undefined && e.pageY != undefined) {
+				x = e.pageX;
+				y = e.pageY;
+    			}
+    			else {
+				x = e.clientX + document.body.scrollLeft +
+            			document.documentElement.scrollLeft;
+				y = e.clientY + document.body.scrollTop +
+            			document.documentElement.scrollTop;
+    			}
+
+			x -= this.canvas.offsetLeft;
+			y -= this.canvas.offsetTop;
+			return [x,y];
+		}
+	}
+	
+	function Playboard(id)
+	{
+		Scanvas.call(this,id);
+		var self = this;
+		this.canvas.addEventListener("mousemove", function(e) { self.onMove(e); }, false);
+		this.canvas.addEventListener("click", function(e) { self.onClick(e); }, false);
+		this.x = 0;
+		this.y = 0;
+		this.crosshairRadius = 10;
+		this.blobX = 0;
+		this.blobY = 0;
+		this.score = 0;
+
+		this.fps = 30;
+		this.now = 0;
+		this.then = Date.now();
+		this.first = this.then;
+		this.interval = 1000/this.fps;
+		this.delta = 0;
+		this.counter = 0;
+
+		this.onMove = function(e) {
+			var pos = this.getCursorPosition(e);
+			this.x = pos[0];
+			this.y = pos[1];
+		}
+
+		this.onClick = function(e) {
+			var pos = this.getCursorPosition(e);
+			var x = pos[0];
+			var y = pos[1];
+			var square_dist = Math.pow(this.blobX - x, 2) + Math.pow(this.blobY - y, 2);
+			if (square_dist <= Math.pow(this.crosshairRadius, 2))
+			{
+				this.score++;
+				this.reset();
+			}
+		}
+
+		this.reset = function() {
+			this.blobX = Math.floor(Math.random() * this.width);
+			this.blobY = Math.floor(Math.random() * this.height);
+		}
+
+		this.render = function() {
+			var self = this;
+			requestAnimationFrame(function() { self.render(); });
+			this.now = Date.now();
+			this.delta = this.now - this.then;
+			if (this.delta > this.interval) {
+				this.then = this.now - (this.delta % this.interval);
+				var time_el = (this.then - this.first)/1000;
+				this.counter++;
+				var fps = Math.floor(this.counter/time_el);
+				if (this.counter > 300) { this.counter = 0; this.first = this.then; }
+				
+
+				this.context.clearRect(0, 0, this.width, this.height);
+				this.renderCrosshair(this.x, this.y);
+				this.renderBlob(this.blobX, this.blobY);
+				this.context.font = "normal 1em Smokum";
+				this.context.textBaseline = "top";
+				this.context.textAlign = "right";
+				this.context.fillText("Score: " + this.score, this.width-5, 5);
+
+				this.context.textBaseline = "bottom";
+				this.context.textAlign = "right";
+				this.context.fillText(this.counter + "/" + Math.floor(time_el) + " = " + fps + "fps", this.width - 5, this.height - 5);
+			}
+		}
+
+		this.renderBlob = function(x, y) {
+			this.context.beginPath();
+			this.context.arc(
+				x,
+				y,
+				this.crosshairRadius,
+				0,
+				Math.PI * 2,
+				false);
+			this.context.closePath();
+			this.context.lineWidth = 3;
+			this.context.strokeStyle = "#f00";
+			this.context.stroke();	
+			
+			this.context.beginPath();
+			this.context.arc(
+				x,
+				y,
+				this.crosshairRadius/2,
+				0,
+				Math.PI * 2,
+				false);			
+			this.context.closePath();
+
+			this.context.lineWidth = 3;
+			this.context.strokeStyle = "#f00";
+			this.context.stroke();	
+			this.context.lineWidth = 1;
+		}
+
+		this.renderCrosshair = function(x, y) {
+			this.context.beginPath();
+			this.context.arc(
+				x,
+				y,
+				this.crosshairRadius,
+				0,
+				Math.PI * 2,
+				false);
+			this.context.closePath();
+			this.context.strokeStyle = "#000";
+			this.context.stroke();	
+
+			this.context.moveTo(x, y - this.crosshairRadius - 3);
+			this.context.lineTo(x, y + this.crosshairRadius + 3);
+
+			this.context.moveTo(x - this.crosshairRadius - 3, y);
+			this.context.lineTo(x + this.crosshairRadius + 3, y);
+
+			this.context.strokeStyle = "#000";
+			this.context.stroke();
+		}
+
+		this.reset();
+		this.render();
+	}
+	Playboard.prototype = Object.create(Scanvas.prototype);
+	Playboard.prototype.constructor = Playboard;
+
+	var sc = new Playboard("a");
+
+</script>
+
+</html>
