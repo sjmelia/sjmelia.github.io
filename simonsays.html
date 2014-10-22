@@ -1,0 +1,333 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link href='http://fonts.googleapis.com/css?family=Shadows+Into+Light' rel='stylesheet' type='text/css'>
+		<style>
+			body
+			{
+				font-family: 'Shadows Into Light';
+			}
+			h1
+			{
+				text-transform: uppercase;
+			}
+
+			#a
+			{
+				border: 1px black dashed;
+			}
+		</style>
+	</head>
+<body>
+	<h1>Simon Says</h1>
+	<canvas id="a" width="300" height="300"></canvas>
+</body>
+
+<script>
+	function getRandomInt(min, max) {
+		return Math.floor(Math.random() * (max - min)) + min;
+	}
+
+	function FpsCalculator()
+	{
+		this.fps = 30;
+		this.now = 0;
+		this.then = Date.now();
+		this.first = this.then;
+		this.interval = 1000/this.fps;
+		this.delta = 0;
+		this.counter = 0;
+		this.time_el = 0;
+
+		this.frame = function() {
+			this.now = Date.now();
+			this.delta = this.now - this.then;
+			if (this.delta > this.interval) {
+				this.then = this.now - (this.delta % this.interval);
+				this.time_el = (this.then - this.first)/1000;
+				this.counter++;
+				var fps = Math.floor(this.counter/this.time_el);
+				if (this.counter > 300) { this.counter = 0; this.first = this.then; }
+				return true;
+			}
+			return false;
+		}
+		
+		this.fpsString = function() {
+			return this.counter 
+					+ "/" 
+					+ Math.floor(this.time_el) 
+					+ " = " 
+					+ this.fps 
+					+ "fps"
+		}
+	}
+
+	function Scanvas(id)
+	{
+		this.canvas = document.getElementById(id);
+		this.context = this.canvas.getContext("2d");
+		this.width = this.canvas.width;
+		this.height = this.canvas.height;
+
+		this.getCursorPosition = function(e) {			
+			var x;
+    			var y;
+    			if (e.pageX != undefined && e.pageY != undefined) {
+				x = e.pageX;
+				y = e.pageY;
+    			}
+    			else {
+				x = e.clientX + document.body.scrollLeft +
+            			document.documentElement.scrollLeft;
+				y = e.clientY + document.body.scrollTop +
+            			document.documentElement.scrollTop;
+    			}
+
+			x -= this.canvas.offsetLeft;
+			y -= this.canvas.offsetTop;
+			return [x,y];
+		}
+	}
+
+	function Playboard(id)
+	{
+		var gameStateEnum = {
+			LEVEL_DISPLAY : 'LevelDisplay',
+			LEVEL_PLAY : 'LevelPlay',
+			LEVEL_SHOW : 'LevelShow',
+			LEVEL_START : 'LevelStart',
+			GAME_OVER : 'GameOver',
+		};
+
+		Scanvas.call(this,id);
+		var self = this;
+		this.canvas.addEventListener("click", function(e) { self.onClick(e); }, false);
+		this.fpsCalculator = new FpsCalculator();
+		this.score = 0;
+		this.levelNumber = 0;
+		this.level = new Array();
+		this.events = new Array();
+		this.animFrame = 0;
+		this.animStart = Date.now();
+
+		this.red = false;
+		this.blue = false;
+		this.green = false;
+		this.yellow = false;
+		
+		this.gameState = gameStateEnum.LEVEL_SHOW;
+	
+		this.onClick = function(e) {
+			if (this.gameState == gameStateEnum.LEVEL_PLAY) {
+				var pos = this.getCursorPosition(e);
+				this.events.push(pos);
+			}
+		}
+
+		this.buildLevel = function() {
+			this.levelNumber++;
+			this.level = new Array();
+			for (var i = 0; i < this.levelNumber; i++)
+			{
+				var col = getRandomInt(0, 4);
+				this.level.push(col);
+			}
+		}
+
+		this.render = function() {
+			var self = this;
+			requestAnimationFrame(function() { self.render(); });
+
+			if (this.gameState == gameStateEnum.LEVEL_PLAY) {
+				// Is a colour already highlighted? If so, then skip a frame
+				if (!(this.red || this.blue || this.green || this.yellow)) {
+					// process events off queue?
+					if (this.events.length > 0) {
+						var pos = this.events[0];
+						this.events.shift();
+					
+						var col = -1;
+						if (pos[0] < this.width/2) {
+							if (pos[1] < this.height/2) {
+								col = 0;
+							}
+							else {
+								col = 2;
+							}
+						}
+						else {
+							if (pos[1] < this.height/2) {
+								col = 1;
+							}
+							else {
+								col = 3;
+							}
+						}
+						// Now, highlight the colour
+						if (col == 0) this.red = true;
+						if (col == 1) this.blue = true;
+						if (col == 2) this.green = true;
+						if (col == 3) this.yellow = true;
+
+						// Now check if it was the right col
+						var correctAnswer = this.level[0];
+						this.level.shift();
+
+						if (correctAnswer != col) {
+							this.gameState = gameStateEnum.GAME_OVER;
+						}
+						else {
+							this.score++;
+						}
+
+
+
+						// Now reset the anim start timer, so the next frame will hit a
+						// second later
+						this.animStart = Date.now();
+					}
+				}
+			}
+
+			// advance one frame per second.
+			if (Date.now() - this.animStart > 500) {
+				this.animFrame++;
+				this.animStart = Date.now();
+
+				if (this.gameState == gameStateEnum.LEVEL_SHOW)
+				{
+					if (this.animFrame == 2)
+					{
+						this.animFrame = 0;
+						this.gameState = gameStateEnum.LEVEL_DISPLAY;	
+					}
+				}
+				else if (this.gameState == gameStateEnum.LEVEL_START)
+				{
+					if (this.animFrame == 1)
+					{
+						this.animFrame = 0;
+						this.gameState = gameStateEnum.LEVEL_PLAY;	
+					}
+				}
+				else if (this.gameState == gameStateEnum.LEVEL_DISPLAY)
+				{
+					if (this.animFrame == (this.levelNumber * 2) + 2)
+					{
+						// The level display is over...
+						this.animFrame = 0;
+						this.gameState = gameStateEnum.LEVEL_START;
+					}
+
+					if (!(this.red && this.blue && this.green && this.yellow) && this.animFrame % 2 == 0) {
+						var col = this.level[(this.animFrame/2)-1];
+						if (col == 0) this.red = true;
+						if (col == 1) this.blue = true;
+						if (col == 2) this.green = true;
+						if (col == 3) this.yellow = true;
+					} else {
+						this.red = false;
+						this.blue = false;
+						this.green = false;
+						this.yellow = false;
+					}
+				}
+				else if (this.gameState == gameStateEnum.LEVEL_PLAY) {
+					// reset, we are ready for next click
+					this.red = false;
+					this.blue = false;
+					this.green = false;
+					this.yellow = false;
+
+					if (this.level.length == 0)
+					{
+						this.gameState = gameStateEnum.LEVEL_SHOW;
+						// build the next level.
+						this.buildLevel();
+						this.animFrame = 0;
+					}
+				}
+			}		
+				
+			if (this.fpsCalculator.frame()) {
+				this.context.clearRect(0, 0, this.width, this.height);
+				this.renderBoard();
+
+				if (this.gameState == gameStateEnum.LEVEL_SHOW)
+				{
+					this.context.fillStyle = "white";
+					this.context.strokeStyle = "#666";
+					this.context.lineWidth = .5;
+					this.context.font = "bold 3em 'Shadows Into Light'";
+					this.context.textBaseline = "middle";
+					this.context.textAlign = "center";
+					var text = "Level: " + this.levelNumber;
+					this.context.fillText(text, this.width/2, this.height/2);
+					this.context.strokeText(text, this.width/2, this.height/2);
+				}
+
+				if (this.gameState == gameStateEnum.LEVEL_START)
+				{
+					this.context.fillStyle = "white";
+					this.context.strokeStyle = "#666";
+					this.context.lineWidth = .5;
+					this.context.font = "bold 3em 'Shadows Into Light'";
+					this.context.textBaseline = "middle";
+					this.context.textAlign = "center";
+					var text = "Go!";
+					this.context.fillText(text, this.width/2, this.height/2);
+					this.context.strokeText(text, this.width/2, this.height/2);
+				}
+
+				if (this.gameState == gameStateEnum.GAME_OVER)
+				{
+					this.context.fillStyle = "white";
+					this.context.strokeStyle = "#666";
+					this.context.lineWidth = .5;
+					this.context.font = "bold 3em 'Shadows Into Light'";
+					this.context.textBaseline = "middle";
+					this.context.textAlign = "center";
+					var text = "GAME OVER!";
+					this.context.fillText(text, this.width/2, this.height/2);
+					this.context.strokeText(text, this.width/2, this.height/2);
+				}
+
+				this.context.fillStyle = "white";
+				this.context.font = "normal 1em 'Shadows Into Light'";
+				this.context.textBaseline = "top";
+				this.context.textAlign = "right";
+				this.context.fillText("Score: " + this.score, this.width-5, 5);
+
+				/*this.context.fillStyle = "darkblue";
+				this.context.textBaseline = "bottom";
+				this.context.textAlign = "right";
+				this.context.fillText(this.fpsCalculator.fpsString(), this.width - 5, this.height - 5);*/
+			}
+		}
+
+		this.renderBoard = function() {
+			this.context.fillStyle = this.red ? "red" : "darkred";
+			this.context.fillRect(0, 0, this.width/2, this.height/2);
+
+			this.context.fillStyle = this.blue ? "blue" : "darkblue";
+			this.context.fillRect(this.width/2,0,this.width,this.height/2);
+
+			this.context.fillStyle = this.green ? "green" : "darkgreen";
+			this.context.fillRect(0, this.height/2, this.width/2, this.height);
+			
+			this.context.fillStyle = this.yellow ? "yellow" : "gold";
+			this.context.fillRect(this.width/2, this.height/2, this.width, this.height);
+		}
+
+		this.buildLevel();
+		this.render();
+	}
+	Playboard.prototype = Object.create(Scanvas.prototype);
+	Playboard.prototype.constructor = Playboard;
+
+	var sc = new Playboard("a");
+
+</script>
+
+</html>
