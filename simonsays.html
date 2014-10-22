@@ -1,11 +1,11 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<link href='http://fonts.googleapis.com/css?family=Shadows+Into+Light' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Changa+One' rel='stylesheet' type='text/css'>
 		<style>
 			body
 			{
-				font-family: 'Shadows Into Light';
+				font-family: 'Changa One';
 			}
 			h1
 			{
@@ -256,36 +256,36 @@
 
 				if (this.gameState == gameStateEnum.LEVEL_SHOW)
 				{
-					this.context.fillStyle = "white";
-					this.context.strokeStyle = "#666";
-					this.context.lineWidth = .5;
-					this.context.font = "bold 3em 'Shadows Into Light'";
+					this.context.fillStyle = "gold";
+					this.context.strokeStyle = "blue";
+					this.context.lineWidth = 3;
+					this.context.font = "bold 2.5em 'Changa One'";
 					this.context.textBaseline = "middle";
 					this.context.textAlign = "center";
-					var text = "Level: " + this.levelNumber;
+					var text = "Level\n" + this.levelNumber;
 					this.context.fillText(text, this.width/2, this.height/2);
 					this.context.strokeText(text, this.width/2, this.height/2);
 				}
 
 				if (this.gameState == gameStateEnum.LEVEL_START)
 				{
-					this.context.fillStyle = "white";
-					this.context.strokeStyle = "#666";
-					this.context.lineWidth = .5;
-					this.context.font = "bold 3em 'Shadows Into Light'";
+					this.context.fillStyle = "gold";
+					this.context.strokeStyle = "blue";
+					this.context.lineWidth = 7;
+					this.context.font = "bold 10em 'Changa One'";
 					this.context.textBaseline = "middle";
 					this.context.textAlign = "center";
-					var text = "Go!";
+					var text = "GO!";
 					this.context.fillText(text, this.width/2, this.height/2);
 					this.context.strokeText(text, this.width/2, this.height/2);
 				}
 
 				if (this.gameState == gameStateEnum.GAME_OVER)
 				{
-					this.context.fillStyle = "white";
-					this.context.strokeStyle = "#666";
-					this.context.lineWidth = .5;
-					this.context.font = "bold 3em 'Shadows Into Light'";
+					this.context.fillStyle = "gold";
+					this.context.strokeStyle = "blue";
+					this.context.lineWidth = 3;
+					this.context.font = "bold 2.5em 'Changa One'";
 					this.context.textBaseline = "middle";
 					this.context.textAlign = "center";
 					var text = "GAME OVER!";
@@ -294,15 +294,10 @@
 				}
 
 				this.context.fillStyle = "white";
-				this.context.font = "normal 1em 'Shadows Into Light'";
+				this.context.font = "normal 1em 'Changa One'";
 				this.context.textBaseline = "top";
 				this.context.textAlign = "right";
 				this.context.fillText("Score: " + this.score, this.width-5, 5);
-
-				/*this.context.fillStyle = "darkblue";
-				this.context.textBaseline = "bottom";
-				this.context.textAlign = "right";
-				this.context.fillText(this.fpsCalculator.fpsString(), this.width - 5, this.height - 5);*/
 			}
 		}
 
