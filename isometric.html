@@ -1,0 +1,164 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link href='http://fonts.googleapis.com/css?family=Changa+One' rel='stylesheet' type='text/css'>
+		<style>
+			body
+			{
+				font-family: 'Changa One';
+			}
+			h1
+			{
+				text-transform: uppercase;
+			}
+
+			#a
+			{
+				border: 1px black dashed;
+			}
+        </style>
+        <script src="scanvas.js"></script>
+        <script src="matrix.js"></script>
+	</head>
+<body>
+	<h1>Isometric</h1>
+	<canvas id="a" width="600" height="300"></canvas>
+</body>
+
+<script>
+    var toRadians = function(degrees) { return degrees * (Math.PI / 180); };
+    
+    var transform = new matrix3(1,0,0,0,1,0,0,0,1);
+    transform = transform.scale(1,0.5);
+    transform = transform.rotate(toRadians(45));
+
+    var inverse = new matrix3(1,0,0,0,1,0,0,0,1);
+    inverse = inverse.rotate(toRadians(-45));
+    inverse = inverse.scale(1,2);
+
+	function Playboard(id)
+    {
+		Scanvas.call(this,id);
+		var self = this;
+		this.canvas.addEventListener("click", function(e) { self.onClick(e); }, false);
+		this.fpsCalculator = new FpsCalculator();
+        this.events = new Array();
+
+        this.map = [[0,0,0,0,0],
+                    [0,2,1,1,0],
+                    [0,1,1,1,0],
+                    [0,1,1,1,0],
+                    [0,0,0,0,0]];
+
+        this.tiles = ["./isometric/grass.png",
+                        "./isometric/water.png",
+                        "./isometric/shore_top.png"];
+
+        this.images = [];
+        this.tiles.forEach(function(currentValue, index, arr) {
+            var img = new Image();
+            img.src = currentValue;
+            self.images.push(img);
+        });
+                        /*
+        this.images.push(new Image());
+        this.images.push(new Image());
+        this.images.push(new Image());
+
+        this.images[0].src = "./isometric/grass.png";
+        this.images[1].src = "./isometric/water.png";
+        this.images[2].src = "./isometric/shore_top.png";*/
+
+        this.TILE_SIZE = 45;
+        this.TILE_SIZE2 = 32;
+
+        this.selx = new vector3(0,0,0);
+
+		this.onClick = function(e) {
+            var pos = this.getCursorPosition(e);
+            var v3 = new vector3(pos[0],pos[1],0);
+            var worldcoord = inverse.multiply(v3);
+            worldcoord.a1 = Math.floor(worldcoord.a1/self.TILE_SIZE);
+            worldcoord.b1 = Math.floor(worldcoord.b1/self.TILE_SIZE);
+            self.selx = worldcoord;
+
+				this.events.push(pos);
+		}
+
+		this.buildLevel = function() {
+			this.levelNumber++;
+			this.level = new Array();
+			for (var i = 0; i < this.levelNumber; i++)
+			{
+				var col = getRandomInt(0, 4);
+				this.level.push(col);
+			}
+		}
+
+		this.render = function() {
+			var self = this;
+			requestAnimationFrame(function() { self.render(); });
+			if (this.fpsCalculator.frame()) {
+                this.renderBoard();
+                for (var tilex = 0; tilex < 5; tilex++)
+                {
+                    for (var tiley = 0; tiley < 5; tiley++)
+                    {
+                        var worldx = tilex * self.TILE_SIZE;
+                        var worldy = tiley * self.TILE_SIZE;
+
+                        var flatScreenX = worldx + self.width/2;
+                        var flatScreenY = worldy;
+
+                        
+                        this.context.fillStyle = "white";
+                        this.context.strokeStyle = "red";
+                        if (tiley == self.selx.b1 && tilex == self.selx.a1)
+                        {
+                            this.context.fillStyle = "red";
+                        }
+
+                        this.context.fillRect(flatScreenX, flatScreenY, 2, 2);
+                        this.context.fillText(tilex + ":" + tiley, flatScreenX, flatScreenY);
+
+                        //worldx+= self.width/2;
+                        var v3 = new vector3(worldx, worldy, 0);
+                        var screenv = transform.multiply(v3);
+
+                        /*var screenx = screenv.a1+=125;
+                        var screeny = screenv.b1+=25;*/
+                        var screenx = screenv.a1;
+                        var screeny = screenv.b1;
+                        var image = this.map[tilex][tiley];
+                        image = this.images[image];
+                        this.context.drawImage(image, screenx-self.TILE_SIZE2, screeny);
+                        if ((tiley==0 && tilex==0) || (tilex==4&&tiley==4)) {
+                            this.context.rect(screenx-self.TILE_SIZE2,screeny,self.TILE_SIZE2*2,self.TILE_SIZE2);
+                        }
+                        this.context.stroke();
+                        this.context.fillRect(screenx, screeny, 2, 2);
+                        this.context.fillText(tilex + ":" + tiley, screenx, screeny);
+                    }
+                }
+
+
+            }
+        };
+
+
+		this.renderBoard = function() {
+			this.context.fillStyle = "black";
+			this.context.fillRect(0, 0, this.width, this.height);
+		};
+
+		this.buildLevel();
+		this.render();
+	}
+	Playboard.prototype = Object.create(Scanvas.prototype);
+	Playboard.prototype.constructor = Playboard;
+
+	var sc = new Playboard("a");
+
+</script>
+
+</html>
