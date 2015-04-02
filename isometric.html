@@ -63,9 +63,9 @@
     transform = transform.translate(250,0);
 
     var inverse = new matrix3(1,0,0,0,1,0,0,0,1);
+    inverse = inverse.translate(-250,0);
     inverse = inverse.rotate(toRadians(-45));
     inverse = inverse.scale(1,2);
-    inverse = inverse.translate(250,0);
 
 	function Playboard(id)
     {
@@ -82,7 +82,7 @@
                     [0,0,0,0,0]];
 
         this.tiles = ["./isometric/floor.png",
-                        "./isometric/water.png",
+                        "./isometric/player.png",
                         "./isometric/shore_top.png"];
 
         this.images = [];
@@ -103,12 +103,12 @@
         this.TILE_SIZE = 45;
         this.TILE_SIZE2 = 32;
 
-        this.selx = new vector3(0,0,0);
+        this.selx = new vector3(2,2,1);
         this.debug = false;
 
 		this.onClick = function(e) {
             var pos = this.getCursorPosition(e);
-            var v3 = new vector3(pos[0],pos[1],0);
+            var v3 = new vector3(pos[0],pos[1],1);
             var worldcoord = inverse.multiply(v3);
             worldcoord.a1 = Math.floor(worldcoord.a1/self.TILE_SIZE);
             worldcoord.b1 = Math.floor(worldcoord.b1/self.TILE_SIZE);
@@ -147,6 +147,12 @@
                         var image = this.map[tilex][tiley];
                         image = this.images[image];
                         this.context.drawImage(image, screenx-self.TILE_SIZE2, screeny);
+
+                        if (tilex == self.selx.a1 && tiley == self.selx.b1) {
+                            image = this.images[1];
+                            this.context.drawImage(image, screenx-self.TILE_SIZE2, //screeny); 
+                                (screeny - image.height)+32);
+                        }
 
                         if (this.debug) {
                             var flatScreenX = worldx + self.width/2;
