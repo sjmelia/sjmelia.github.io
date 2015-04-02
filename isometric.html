@@ -22,19 +22,50 @@
 	</head>
 <body>
 	<h1>Isometric</h1>
-	<canvas id="a" width="600" height="300"></canvas>
+    <canvas id="a" width="600" height="300"></canvas>
+    <div>
+        <label for="debug">debug</label>
+        <input type="checkbox" name="debug" id="debug">
+    </div>
+
 </body>
 
 <script>
+    var a = new matrix3(1,2,3,4,5,6,7,8,9);
+    var b = new matrix3(10,11,12,13,14,15,16,17,18);
+    var result = a.multiply(b);
+    if (!(result.a1 == 84 && result.a2 == 90 && result.a3 == 96 && result.b1 == 201 && result.b2 == 216 && result.b3 == 231 && result.c1 == 318 && result.c2 == 342 && result.c3 == 366))
+    {
+        alert("matrix multiplication broken!");
+    }
+
+    var c = new vector3(10,11,12);
+    var result2 = a.multiply(c);
+    if (!(result2.a1 == 68 && result2.b1 == 167 && result2.c1 == 266))
+    {
+        alert("vector multiplcation broken!");
+    }
+
+    var identity = new matrix3(1,0,0,0,1,0,0,0,1);
+    var translated = identity.translate(10,10);
+    var translatedv = translated.multiply(c);
+    if (!(translatedv.a1 == 20 && translatedv.b1 == 21))
+    {
+//        alert("translate broken!");
+    }
+
+
     var toRadians = function(degrees) { return degrees * (Math.PI / 180); };
     
     var transform = new matrix3(1,0,0,0,1,0,0,0,1);
     transform = transform.scale(1,0.5);
     transform = transform.rotate(toRadians(45));
+    transform = transform.translate(250,0);
 
     var inverse = new matrix3(1,0,0,0,1,0,0,0,1);
     inverse = inverse.rotate(toRadians(-45));
     inverse = inverse.scale(1,2);
+    inverse = inverse.translate(250,0);
 
 	function Playboard(id)
     {
@@ -45,12 +76,12 @@
         this.events = new Array();
 
         this.map = [[0,0,0,0,0],
-                    [0,2,1,1,0],
-                    [0,1,1,1,0],
-                    [0,1,1,1,0],
+                    [0,0,0,0,0],
+                    [0,0,0,0,0],
+                    [0,0,0,0,0],
                     [0,0,0,0,0]];
 
-        this.tiles = ["./isometric/grass.png",
+        this.tiles = ["./isometric/floor.png",
                         "./isometric/water.png",
                         "./isometric/shore_top.png"];
 
@@ -73,6 +104,7 @@
         this.TILE_SIZE2 = 32;
 
         this.selx = new vector3(0,0,0);
+        this.debug = false;
 
 		this.onClick = function(e) {
             var pos = this.getCursorPosition(e);
@@ -107,41 +139,47 @@
                         var worldx = tilex * self.TILE_SIZE;
                         var worldy = tiley * self.TILE_SIZE;
 
-                        var flatScreenX = worldx + self.width/2;
-                        var flatScreenY = worldy;
-
-                        
-                        this.context.fillStyle = "white";
-                        this.context.strokeStyle = "red";
-                        if (tiley == self.selx.b1 && tilex == self.selx.a1)
-                        {
-                            this.context.fillStyle = "red";
-                        }
-
-                        this.context.fillRect(flatScreenX, flatScreenY, 2, 2);
-                        this.context.fillText(tilex + ":" + tiley, flatScreenX, flatScreenY);
-
-                        //worldx+= self.width/2;
-                        var v3 = new vector3(worldx, worldy, 0);
+                        var v3 = new vector3(worldx, worldy, 1);
                         var screenv = transform.multiply(v3);
 
-                        /*var screenx = screenv.a1+=125;
-                        var screeny = screenv.b1+=25;*/
                         var screenx = screenv.a1;
                         var screeny = screenv.b1;
                         var image = this.map[tilex][tiley];
                         image = this.images[image];
                         this.context.drawImage(image, screenx-self.TILE_SIZE2, screeny);
-                        if ((tiley==0 && tilex==0) || (tilex==4&&tiley==4)) {
-                            this.context.rect(screenx-self.TILE_SIZE2,screeny,self.TILE_SIZE2*2,self.TILE_SIZE2);
-                        }
-                        this.context.stroke();
-                        this.context.fillRect(screenx, screeny, 2, 2);
-                        this.context.fillText(tilex + ":" + tiley, screenx, screeny);
+
+                        if (this.debug) {
+                            var flatScreenX = worldx + self.width/2;
+                            var flatScreenY = worldy;
+                            
+                            this.context.fillStyle = "white";
+                            this.context.strokeStyle = "red";
+                            if (tiley == self.selx.b1 && tilex == self.selx.a1)
+                            {
+                                this.context.fillStyle = "red";
+                            }
+
+                            this.context.fillRect(flatScreenX, flatScreenY, 2, 2);
+                            this.context.fillText(tilex + ":" + tiley, flatScreenX, flatScreenY);
+
+                            // draw points and coords for each point.
+                            this.context.fillRect(screenx, screeny, 2, 2);
+                            this.context.fillText(tilex + ":" + tiley, screenx, screeny);
+
+                            // Paint red boxes around some tiles.
+                            if ((tiley==0 && tilex==0) || (tilex==4&&tiley==4)) {
+                                this.context.rect(screenx-self.TILE_SIZE2,screeny,self.TILE_SIZE2*2,self.TILE_SIZE2);
+                                this.context.stroke();
+                            }
+                        };
                     }
                 }
 
-
+                if (this.debug) {
+                    this.context.textBaseline = "bottom";
+                    this.context.textAlign = "right";
+                    this.context.fillText(this.fpsCalculator.fpsString(), this.width - 5, this.height-5);
+                }
             }
         };
 
@@ -149,7 +187,11 @@
 		this.renderBoard = function() {
 			this.context.fillStyle = "black";
 			this.context.fillRect(0, 0, this.width, this.height);
-		};
+        };
+
+        this.setDebug = function(debug) {
+            this.debug = debug;
+        };
 
 		this.buildLevel();
 		this.render();
@@ -158,7 +200,9 @@
 	Playboard.prototype.constructor = Playboard;
 
 	var sc = new Playboard("a");
-
+    document.getElementById("debug").onclick = function() {
+        sc.setDebug(this.checked);
+    };
 </script>
 
 </html>
