@@ -4,19 +4,30 @@
         <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
         <link href='http://fonts.googleapis.com/css?family=Permanent+Marker' rel='stylesheet' type='text/css'>
 		<style>
-			#canvas { border: 1px black solid; }
+            #canvas { border: 0px; } /*width:100%; height:100%; }*/
             #underlying { display: none; }
-            body
-            {
-                width:100%;
-                height:100%;
-                margin:0px;
-            }
+            html, body { height : 100%; margin: 0; font-family:Permanent Marker; }
+            #header { height: 87px; }
+            #wrapper { display: flex; min-height: 100%; flex-direction: column; }
+            #main { flex: 1; }
+            #footer { height: 100px;}
+            #header p { float: right; }
 		</style>	
 	</head>
-	<body>
-		<canvas id="canvas" width="300" height="300"></canvas>
-		<img id="underlying" src="NUTS_1_regions_EU-27.svg.png"/>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+                <p>Map courtesy of <a href="http://en.wikipedia.org/wiki/Continent#/media/File:Continents_vide_couleurs.png">Wikipedia</a></p>
+                <h1>Continent Map!</h1>
+            </div>
+            <div id="main">
+                    <canvas id="canvas" width="300" height="300"></canvas>
+            </div>
+            <div id="footer">
+                Click on the map to select a region!
+            </div>
+        </div>
+		<img id="underlying" src="Continents_vide_couleurs.png"/>
 	</body>
 
 	<script type="text/javascript">
@@ -40,11 +51,14 @@
             this.y = 0;
 
             this.regions = {};
-            this.regions[0] = "sea";
-            this.regions[15330024] = "light gray";
-            this.regions[15132645] = "another light gray";
-            this.regions[11777202] = "dark gray";
-            this.regions[16252645] = "blue";
+            this.regions[16777470] = "Sea or border";
+            this.regions[13369599] = "North America";
+            this.regions[8388863] = "South America";
+            this.regions[448] = "Europe";
+            this.regions[13971453] = "Africa";
+            this.regions[4063986] = "Asia";
+            this.regions[4259839] = "Antarctica";
+            this.regions[4227519] = "Oceania";
 
             this.init = function() {
                 cvs = document.createElement('canvas');
@@ -62,8 +76,7 @@
                 var colour = (d[i] << 32) + (d[i+1] << 16) + (d[i+2] << 8) + d[i+3];
                 if (!(colour in this.regions))
                 {
-                    // debugging
-                    alert("" + colour + " not in array");
+                    return colour;
                 }
                 return this.regions[colour];
 
@@ -79,22 +92,24 @@
         var game = function() {
             this.map = new map(this);
             this.clicks = [];
+            this.container = $('#main');
             this.render = function(context) {
                 context.canvas.width = window.innerWidth;
-                context.canvas.height = window.innerHeight;
+                context.canvas.height = window.innerHeight-200;
+
 
                 context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 			    this.map.render(context);
-                context.font = "20px Permanent Marker";
+                /*context.font = "20px Permanent Marker";
                 context.fillStyle = "black";
-                context.fillText("NUTS!",30,30);
+                context.fillText("NUTS!",30,30);*/
 			};
 			this.logic = function() {
                 this.map.logic();
                 while (i = this.clicks.pop())
                 {
                     var c = this.map.getRegion(i[0], i[1]);
-                    alert(c);
+                    $('#footer').text("You clicked " + c);
                 }
             };
             this.queueClick = (function(pt) {
