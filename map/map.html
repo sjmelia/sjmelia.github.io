@@ -1,11 +1,9 @@
 <html>
 	<head>
 		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-        <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js"></script>
         <link href='http://fonts.googleapis.com/css?family=Permanent+Marker' rel='stylesheet' type='text/css'>
 		<style>
-            #canvas { border: 0px; } /*width:100%; height:100%; }*/
-            #underlying { display: none; }
             html, body { height : 100%; margin: 0; font-family:Permanent Marker; }
             #header { height: 87px; }
             #wrapper { display: flex; min-height: 100%; flex-direction: column; }
@@ -17,63 +15,54 @@
     <body>
         <div id="wrapper">
             <div id="header">
-                <p>Map courtesy of <a href="http://en.wikipedia.org/wiki/Continent#/media/File:Continents_vide_couleurs.png">Wikipedia</a></p>
+                <p>Map courtesy of <a href="http://commons.wikimedia.org/wiki/File:World_map_-_low_resolution.svg">Wikipedia</a></p>
                 <h1>Continent Map!</h1>
             </div>
             <div id="main">
-                <object id="map" type="image/svg_xml" data="World_map_-_low_resolution.svg"></object>
             </div>
             <div id="footer">
                 Click on the map to select a region!
             </div>
         </div>
-		<img id="underlying" src="Continents_vide_couleurs.png"/>
 	</body>
 
-	<script type="text/javascript">
-        this.regions = {};
-        this.regions[16777470] = "Sea or border";
-        this.regions[13369599] = "North America";
-        this.regions[8388863] = "South America";
-        this.regions[448] = "Europe";
-        this.regions[13971453] = "Africa";
-        this.regions[4063986] = "Asia";
-        this.regions[4259839] = "Antarctica";
-        this.regions[4227519] = "Oceania";
-
-
+    <script type="text/javascript">
         var Map = function() {
-            this.svg = $('#map')[0].contentDocument;
+            var self = this;        
             this.territories = [];
 
             this.init = function() {
-                // First child is a comment from the generator
-                var territories = this.svg.childNodes[1].childNodes;
-                for (var i = 0; i < territories.length; i++) {
-                    if (territories[i].tagName != "path")
-                    {
-                        continue;
-                    }
+                // Retrieve territories from SVG and bind click handlers
+                var paths = d3.select("#main svg").selectAll("path");
+                paths.each(function(d, i) {
+                    var territory = d3.select(this);
+                    self.territories.push(territory);
 
-                    var territory = territories[i];
-                    this.territories.push(territory);
-
-                    territory.onclick = (function(e) {
-                        this.select(e.target);
-                    }).bind(this);
-                }
+                    territory.on("click", function() {
+                        self.selectTerritory(d3.select(this));
+                    });
+                });
             };
 
-            this.select = function(territory) {
-                this.territories.forEach(function(value) { value.style.fill = "black"; });
-                territory.style.fill = "red";
-                $('#footer').text("You clicked " + territory.id);
+            this.selectTerritory = function(territory) {
+                this.territories.forEach(function(value) { 
+                        value.transition().style("fill", "black");
+                        });
+
+                territory.transition()
+                    .duration(500)
+                    .style("fill", "red");
+
+                d3.select('#footer').text("You clicked " + territory.attr("id"));
             };
 
-            this.init();
+            // Trigger loading of the map, then init when complete
+            d3.xml("World_map_-_low_resolution.svg", "image/svg+xml", function(xml) {
+                document.getElementById("main").appendChild(xml.documentElement);
+                self.init();
+            });
         };
 
         var map = new Map();
-        map.select();
     </script>
 </html>
