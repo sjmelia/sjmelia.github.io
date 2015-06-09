@@ -21,7 +21,7 @@
                 <h1>Continent Map!</h1>
             </div>
             <div id="main">
-                    <canvas id="canvas" width="300" height="300"></canvas>
+                <object id="map" type="image/svg_xml" data="World_map_-_low_resolution.svg"></object>
             </div>
             <div id="footer">
                 Click on the map to select a region!
@@ -31,155 +31,49 @@
 	</body>
 
 	<script type="text/javascript">
+        this.regions = {};
+        this.regions[16777470] = "Sea or border";
+        this.regions[13369599] = "North America";
+        this.regions[8388863] = "South America";
+        this.regions[448] = "Europe";
+        this.regions[13971453] = "Africa";
+        this.regions[4063986] = "Asia";
+        this.regions[4259839] = "Antarctica";
+        this.regions[4227519] = "Oceania";
 
-		// shim layer with setTimeout fallback
-		window.requestAnimFrame = (function(){
-		  return  window.requestAnimationFrame       ||
-		          window.webkitRequestAnimationFrame ||
-		          window.mozRequestAnimationFrame    ||
-		          function( callback ){
-		            window.setTimeout(callback, 1000 / 60);
-		          };
-		})();
 
-		var fps = 30;
-
-		var map = function(game) {
-			this.game = game;
-			this.image = $('#underlying');
-			this.x = 0; 
-            this.y = 0;
-
-            this.regions = {};
-            this.regions[16777470] = "Sea or border";
-            this.regions[13369599] = "North America";
-            this.regions[8388863] = "South America";
-            this.regions[448] = "Europe";
-            this.regions[13971453] = "Africa";
-            this.regions[4063986] = "Asia";
-            this.regions[4259839] = "Antarctica";
-            this.regions[4227519] = "Oceania";
+        var Map = function() {
+            this.svg = $('#map')[0].contentDocument;
+            this.territories = [];
 
             this.init = function() {
-                cvs = document.createElement('canvas');
-                cvs.width = this.image[0].width;
-                cvs.height = this.image[0].height;
-                imgContext = cvs.getContext("2d");
-                imgContext.drawImage(this.image[0], 0, 0, cvs.width, cvs.height);
-                this.imageData = imgContext.getImageData(0,0, cvs.width, cvs.height);
-                this.originalImageData = new Uint8ClampedArray(this.imageData.data);
+                // First child is a comment from the generator
+                var territories = this.svg.childNodes[1].childNodes;
+                for (var i = 0; i < territories.length; i++) {
+                    if (territories[i].tagName != "path")
+                    {
+                        continue;
+                    }
+
+                    var territory = territories[i];
+                    this.territories.push(territory);
+
+                    territory.onclick = (function(e) {
+                        this.select(e.target);
+                    }).bind(this);
+                }
             };
 
-            this.getRegion = (function(x, y) {
-                var index = y * this.imageData.width + x;
-                var i = index * 4;
-                this.imageData.data.set(this.originalImageData);
-                var colour = (this.originalImageData[i] << 32) 
-                    + (this.originalImageData[i+1] << 16) 
-                    + (this.originalImageData[i+2] << 8) 
-                    + this.originalImageData[i+3];
-                if (!(colour in this.regions))
-                {
-                    return colour;
-                }
-
-                var d = this.imageData.data;
-                for (var j = 0; j < d.length; j += 4)
-                {
-                    if (this.originalImageData[j] == this.originalImageData[i] &&
-                        this.originalImageData[j+1] == this.originalImageData[i+1] &&
-                        this.originalImageData[j+2] == this.originalImageData[i+2])
-                    {
-                        d[j] = 0;
-                        d[j+1] = 0;
-                        d[j+2] = 0;
-                    }
-                }
-
-
-                return this.regions[colour];
-
-            }).bind(this);
-
-			this.render = function(context) {
-                //context.drawImage(this.image[0], this.x, this.y);
-                
-                context.putImageData(this.imageData, this.x, this.y);
-			};
-            
-            this.logic = function() {
+            this.select = function(territory) {
+                this.territories.forEach(function(value) { value.style.fill = "black"; });
+                territory.style.fill = "red";
+                $('#footer').text("You clicked " + territory.id);
             };
 
             this.init();
-		};
-
-        var game = function() {
-            this.map = new map(this);
-            this.clicks = [];
-            this.container = $('#main');
-            this.render = function(context) {
-                context.canvas.width = window.innerWidth;
-                context.canvas.height = window.innerHeight-200;
-
-
-                context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-			    this.map.render(context);
-            };
-
-			this.logic = function() {
-                this.map.logic();
-                while (i = this.clicks.pop())
-                {
-                    var c = this.map.getRegion(i[0], i[1]);
-
-                    
-
-                    $('#footer').text("You clicked " + c);
-                }
-            };
-
-            this.queueClick = (function(pt) {
-                this.clicks.push(pt);
-            }).bind(this);
-		};
-
-		var canvas = $('#canvas')[0];
-        var getCursorPosition = function(e) {			
-			var x;
-    			var y;
-    			if (e.pageX != undefined && e.pageY != undefined) {
-				x = e.pageX;
-				y = e.pageY;
-    			}
-    			else {
-				x = e.clientX + document.body.scrollLeft +
-            			document.documentElement.scrollLeft;
-				y = e.clientY + document.body.scrollTop +
-            			document.documentElement.scrollTop;
-    			}
-
-			x -= canvas.offsetLeft;
-			y -= canvas.offsetTop;
-			return [x,y];
-		}
-
-        var context = canvas.getContext('2d');
-
-        $('#underlying')[0].onload = function() {
-            var gameInstance = new game();
-
-            canvas.addEventListener("click", function(e) {
-                    var pt = getCursorPosition(e);
-                    gameInstance.queueClick(pt);
-                    });
-
-            var animLoop = (function (){
-                setTimeout(function() { requestAnimFrame(animLoop); }, 1000 / fps);
-                gameInstance.logic();
-                gameInstance.render(context);
-            });
-            animLoop();
-
         };
-	</script>
+
+        var map = new Map();
+        map.select();
+    </script>
 </html>
