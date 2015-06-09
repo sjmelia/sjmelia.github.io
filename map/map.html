@@ -16,7 +16,7 @@
         <div id="wrapper">
             <div id="header">
                 <p>Map courtesy of <a href="http://commons.wikimedia.org/wiki/File:World_map_-_low_resolution.svg">Wikipedia</a></p>
-                <h1>Continent Map!</h1>
+                <h1>Map!</h1>
             </div>
             <div id="main">
             </div>
@@ -32,8 +32,16 @@
             this.territories = [];
 
             this.init = function() {
+                this.svg = d3.select("#main svg");
+                this.zoom = d3.behavior.zoom()
+                    .translate([0, 0])
+                    .scale(1)
+                    .scaleExtent([1, 8])
+                    .on("zoom", this.zoomed);
+                this.svg.call(this.zoom);
+
                 // Retrieve territories from SVG and bind click handlers
-                var paths = d3.select("#main svg").selectAll("path");
+                var paths = this.svg.selectAll("path");
                 paths.each(function(d, i) {
                     var territory = d3.select(this);
                     self.territories.push(territory);
@@ -42,6 +50,17 @@
                         self.selectTerritory(d3.select(this));
                     });
                 });
+            };
+
+            this.zoomed = function() {
+                var t = d3.event.translate;
+                var s = d3.event.scale;
+
+                // Easy to bound the top left pan
+                t[0] = Math.min(t[0], 0);
+                t[1] = Math.min(t[1], 0);
+
+                self.svg.attr("transform", "translate(" + t + ")scale(" + s + ")");
             };
 
             this.selectTerritory = function(territory) {
