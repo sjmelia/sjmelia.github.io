@@ -67,26 +67,50 @@
                 imgContext = cvs.getContext("2d");
                 imgContext.drawImage(this.image[0], 0, 0, cvs.width, cvs.height);
                 this.imageData = imgContext.getImageData(0,0, cvs.width, cvs.height);
+                this.originalImageData = new Uint8ClampedArray(this.imageData.data);
             };
-            this.init();
+
             this.getRegion = (function(x, y) {
                 var index = y * this.imageData.width + x;
                 var i = index * 4;
-                var d = this.imageData.data;
-                var colour = (d[i] << 32) + (d[i+1] << 16) + (d[i+2] << 8) + d[i+3];
+                this.imageData.data.set(this.originalImageData);
+                var colour = (this.originalImageData[i] << 32) 
+                    + (this.originalImageData[i+1] << 16) 
+                    + (this.originalImageData[i+2] << 8) 
+                    + this.originalImageData[i+3];
                 if (!(colour in this.regions))
                 {
                     return colour;
                 }
+
+                var d = this.imageData.data;
+                for (var j = 0; j < d.length; j += 4)
+                {
+                    if (this.originalImageData[j] == this.originalImageData[i] &&
+                        this.originalImageData[j+1] == this.originalImageData[i+1] &&
+                        this.originalImageData[j+2] == this.originalImageData[i+2])
+                    {
+                        d[j] = 0;
+                        d[j+1] = 0;
+                        d[j+2] = 0;
+                    }
+                }
+
+
                 return this.regions[colour];
 
             }).bind(this);
 
 			this.render = function(context) {
-				context.drawImage(this.image[0], this.x, this.y);
+                //context.drawImage(this.image[0], this.x, this.y);
+                
+                context.putImageData(this.imageData, this.x, this.y);
 			};
-			this.logic = function() {
-			};
+            
+            this.logic = function() {
+            };
+
+            this.init();
 		};
 
         var game = function() {
@@ -100,18 +124,20 @@
 
                 context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 			    this.map.render(context);
-                /*context.font = "20px Permanent Marker";
-                context.fillStyle = "black";
-                context.fillText("NUTS!",30,30);*/
-			};
+            };
+
 			this.logic = function() {
                 this.map.logic();
                 while (i = this.clicks.pop())
                 {
                     var c = this.map.getRegion(i[0], i[1]);
+
+                    
+
                     $('#footer').text("You clicked " + c);
                 }
             };
+
             this.queueClick = (function(pt) {
                 this.clicks.push(pt);
             }).bind(this);
@@ -140,19 +166,19 @@
         var context = canvas.getContext('2d');
 
         $('#underlying')[0].onload = function() {
-        var gameInstance = new game();
+            var gameInstance = new game();
 
-        canvas.addEventListener("click", function(e) {
-                var pt = getCursorPosition(e);
-                gameInstance.queueClick(pt);
-                });
+            canvas.addEventListener("click", function(e) {
+                    var pt = getCursorPosition(e);
+                    gameInstance.queueClick(pt);
+                    });
 
-        var animLoop = (function (){
-			setTimeout(function() { requestAnimFrame(animLoop); }, 1000 / fps);
-			gameInstance.logic();
-			gameInstance.render(context);
-		});
-        animLoop();
+            var animLoop = (function (){
+                setTimeout(function() { requestAnimFrame(animLoop); }, 1000 / fps);
+                gameInstance.logic();
+                gameInstance.render(context);
+            });
+            animLoop();
 
         };
 	</script>
