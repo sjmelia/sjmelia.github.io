@@ -5,10 +5,14 @@
         <link href='http://fonts.googleapis.com/css?family=Permanent+Marker' rel='stylesheet' type='text/css'>
 		<style>
             html, body { height : 100%; margin: 0; font-family:Permanent Marker; }
-            #header { height: 87px; }
-            #wrapper { display: flex; min-height: 100%; flex-direction: column; }
+            #header { height: 60px; }
+            #wrapper { 
+                display: flex; 
+                min-height: 100%; 
+                flex-direction: column;  
+            }
             #main { flex: 1; }
-            #footer { height: 100px;}
+            #footer { height: 30px;}
             #header p { float: right; }
 		</style>	
 	</head>
@@ -38,12 +42,15 @@
                     .scale(1)
                     .scaleExtent([1, 8])
                     .on("zoom", this.zoomed);
-                this.svg.call(this.zoom);
+                d3.select("#main").call(this.zoom);
 
                 // Retrieve territories from SVG and bind click handlers
                 var paths = this.svg.selectAll("path");
                 paths.each(function(d, i) {
                     var territory = d3.select(this);
+                    territory.style("stroke", "#bbb");
+                    territory.style("stroke-width", "1");
+                    territory.style("fill", "#eee");
                     self.territories.push(territory);
 
                     territory.on("click", function() {
@@ -65,21 +72,35 @@
 
             this.selectTerritory = function(territory) {
                 this.territories.forEach(function(value) { 
-                        value.transition().style("fill", "black");
+                        value.transition().style("fill", "#eee");
                         });
 
                 territory.transition()
                     .duration(500)
-                    .style("fill", "red");
+                    .style("fill", "#ccf");
 
                 d3.select('#footer').text("You clicked " + territory.attr("id"));
             };
 
+            this.resize = function() {
+                var parent = self.svg.node().parentNode;
+                self.svg.attr("height", "1px");
+                self.svg.attr("height", parent.clientHeight);
+            };
+
             // Trigger loading of the map, then init when complete
-            d3.xml("World_map_-_low_resolution.svg", "image/svg+xml", function(xml) {
-                document.getElementById("main").appendChild(xml.documentElement);
-                self.init();
-            });
+            d3.xml("World_map_-_low_resolution.svg", 
+                    "image/svg+xml", 
+                    function(xml) {
+                        document.getElementById("main")
+                        .appendChild(xml.documentElement);
+                        
+                        d3.select("svg");
+                        //.attr("preserveAspectRatio", "none");
+                        self.init();
+                        self.resize();
+                        d3.select(window).on("resize", self.resize);
+                    });
         };
 
         var map = new Map();
