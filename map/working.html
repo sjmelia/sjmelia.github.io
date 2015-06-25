@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            html, body
+            {
+                height: 100%;
+            }
+
+            #outer
+            {
+                height: 100%;
+                width: 100%;
+                background-color: red;
+            }
+
+            #inner
+            {
+                height: 50%;
+                width: 100%;
+                background-color: blue;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="outer">
+            <div id="inner">
+                &nbsp;
+            </div>
+        </div>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
+        <script>
+            $('#outer').on('click', function() { alert("outer"); });
+            $('#inner').on('click', function() { alert("inner"); });
+        </script>
+    </body>
+
+</html>
