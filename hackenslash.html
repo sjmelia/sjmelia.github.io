@@ -20,6 +20,27 @@
     <script type="text/javascript">
         var fps = 30;
 
+        var animation = function(image, width, height, frames, sheetX) {
+            this.image = image;
+            this.width = width;
+            this.height = height;
+            this.frameY = this.height * sheetX;
+            this.frames = frames;
+            this.frame = 0;
+
+            this.render = function(context, x, y) {
+                var frameX = this.frame * this.width;
+                context.drawImage(this.image, frameX, this.frameY, this.width, this.height, x, y, this.width, this.height); 
+            };
+
+            this.logic = function() {
+                this.frame++;
+
+                if (this.frame > this.frames)
+                    this.frame = 0;
+            };
+        }
+
         // http://lpc.opengameart.org/static/lpc-style-guide/assets.html#assets-character-base
         var player = function(game) {
             this.x = 0;
@@ -28,26 +49,36 @@
             this.yvel = 0;
             this.WIDTH = 64;
             this.HEIGHT = 64;
-            this.slash = $('#slash')[0];
-            this.walk = $('#walkcycle')[0];
-            this.frame = 0;
-            this.facing = 0;
+            this.attack = false;
+            
+            this.walkUp = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 0);
+            this.walkLeft = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 1);
+            this.walkDown = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 2);
+            this.walkRight = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 3);
+            
+            this.slashUp = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 0);
+            this.slashLeft = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 1);
+            this.slashDown = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 2);
+            this.slashRight = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 3);
+            
+            this.currentAnimation = this.walkDown;
+
             this.render = function(context) {
-                if (this.xvel < 0) this.facing = 1;
-                if (this.xvel > 0) this.facing = 3;
-                if (this.yvel < 0) this.facing = 0;
-                if (this.yvel > 0) this.facing = 2;
-                var frameY = this.HEIGHT * this.facing;
-                var frameX = this.frame * this.WIDTH;
-                context.drawImage(this.walk, frameX, frameY, this.WIDTH, this.HEIGHT, this.x, this.y, this.WIDTH, this.HEIGHT); 
+                if (this.xvel < 0) this.currentAnimation = this.walkLeft;
+                if (this.xvel > 0) this.currentAnimation = this.walkRight;
+                if (this.yvel < 0) this.currentAnimation = this.walkUp;
+                if (this.yvel > 0) this.currentAnimation = this.walkDown;
+                if (this.xvel < 0 && this.attack) this.currentAnimation = this.slashLeft;
+                if (this.xvel > 0 && this.attack) this.currentAnimation = this.slashRight;
+                if (this.yvel < 0 && this.attack) this.currentAnimation = this.slashUp;
+                if (this.yvel > 0 && this.attack) this.currentAnimation = this.slashDown;
+
+                this.currentAnimation.render(context, this.x, this.y);
             };
 
             this.logic = function() {
                 if (this.xvel != 0 || this.yvel != 0)
-                    this.frame++;
-                
-                if (this.frame > 8)
-                    this.frame = 0;
+                    this.currentAnimation.logic();
 
                 this.x += this.xvel;
                 this.y += this.yvel;
@@ -75,6 +106,7 @@
             this.SPEED = 3;
             this.keydown = (function(e) {
                 switch(e.keyCode) {
+                    case 17: this.player.attack = true; break;
                     case 37: this.player.xvel = -this.SPEED; break;
                     case 38: this.player.yvel = -this.SPEED; break;
                     case 39: this.player.xvel = this.SPEED; break;
@@ -84,6 +116,7 @@
 
             this.keyup = (function(e) {
                 switch(e.keyCode) {
+                    case 17: this.player.attack = false; break;
                     case 37: this.player.xvel = 0; break;
                     case 38: this.player.yvel = 0; break;
                     case 39: this.player.xvel = 0; break;
