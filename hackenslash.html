@@ -2,6 +2,7 @@
     <head>
         <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
         <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+        <script src="hackenslash/InputComponent.js"></script>
 		<link href='http://fonts.googleapis.com/css?family=Cinzel Decorative' rel='stylesheet' type='text/css'>
         <style>
             body { font-family: Cinzel Decorative; }
@@ -27,6 +28,8 @@
             this.frameY = this.height * sheetX;
             this.frames = frames;
             this.frame = 0;
+            this.speed = 0;
+            this.ended = false;
 
             this.render = function(context, x, y) {
                 var frameX = this.frame * this.width;
@@ -34,23 +37,53 @@
             };
 
             this.logic = function() {
-                this.frame++;
+                this.frame += this.speed;
 
                 if (this.frame > this.frames)
+                {
                     this.frame = 0;
+                    if (this.ended)
+                        this.ended();
+                }
+            };
+
+            this.reset = function() {
+                this.frame = 0;
+            };
+
+            this.start = function() {
+                this.speed = 1;
+            };
+
+            this.stop = function() {
+                this.speed = 0;
+                if (this.ended)
+                    this.ended();
             };
         }
 
         // http://lpc.opengameart.org/static/lpc-style-guide/assets.html#assets-character-base
         var player = function(game) {
+            var facingEnum = {
+                UP : 0,
+                DOWN : 1,
+                LEFT : 2,
+                RIGHT : 3
+            };
+
             this.x = 0;
             this.y = 0;
             this.xvel = 0;
             this.yvel = 0;
+            this.attackXVel = 0;
+            this.attackYVel = 0;
             this.WIDTH = 64;
             this.HEIGHT = 64;
             this.attack = false;
-            
+            this.ATTACK_SPEED = 5;
+            this.SPEED = 3;
+            this.facing = facingEnum.DOWN;
+
             this.walkUp = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 0);
             this.walkLeft = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 1);
             this.walkDown = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 2);
@@ -60,39 +93,141 @@
             this.slashLeft = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 1);
             this.slashDown = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 2);
             this.slashRight = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 3);
-            
             this.currentAnimation = this.walkDown;
 
             this.render = function(context) {
-                if (this.xvel < 0) this.currentAnimation = this.walkLeft;
-                if (this.xvel > 0) this.currentAnimation = this.walkRight;
-                if (this.yvel < 0) this.currentAnimation = this.walkUp;
-                if (this.yvel > 0) this.currentAnimation = this.walkDown;
-                if (this.xvel < 0 && this.attack) this.currentAnimation = this.slashLeft;
-                if (this.xvel > 0 && this.attack) this.currentAnimation = this.slashRight;
-                if (this.yvel < 0 && this.attack) this.currentAnimation = this.slashUp;
-                if (this.yvel > 0 && this.attack) this.currentAnimation = this.slashDown;
-
                 this.currentAnimation.render(context, this.x, this.y);
             };
 
             this.logic = function() {
-                if (this.xvel != 0 || this.yvel != 0)
-                    this.currentAnimation.logic();
+                this.currentAnimation.logic();
 
                 this.x += this.xvel;
                 this.y += this.yvel;
+                this.x += this.attackXVel;
+                this.y += this.attackYVel;
                 if (this.x > 300-this.WIDTH) this.x = 300 - this.WIDTH;
                 if (this.x < 0) this.x = 0;
                 if (this.y > 300-this.HEIGHT) this.y = 300-this.HEIGHT;
                 if (this.y < 0) this.y = 0;
             };
+
+            this.stopIfNotMoving = function() {
+                if (this.xvel == 0 && this.yvel == 0)
+                    this.currentAnimation.stop();
+            };
+
+            this.beginAttack = function() {
+                if (this.facing == facingEnum.LEFT)
+                {
+                    this.currentAnimation = this.slashLeft;
+                    this.attackXVel = -this.ATTACK_SPEED;
+                }
+
+                if (this.facing == facingEnum.RIGHT)
+                {
+                    this.currentAnimation = this.slashRight;
+                    this.attackXVel = this.ATTACK_SPEED;
+                }
+
+                if (this.facing == facingEnum.UP)
+                {
+                    this.currentAnimation = this.slashUp;
+                    this.attackYVel = -this.ATTACK_SPEED;
+                }
+
+                if (this.facing == facingEnum.DOWN)
+                {
+                    this.currentAnimation = this.slashDown;
+                    this.attackYVel = this.ATTACK_SPEED;
+                }
+                this.currentAnimation.reset();
+                this.currentAnimation.start();
+                this.attack = true;
+            };
+
+            this.endAttack = function() {
+            };
+
+            this.endAttackAnimation = function() {
+                this.attackXVel = 0;
+                this.attackYVel = 0;
+                if (this.facing == facingEnum.LEFT) 
+                    this.currentAnimation = this.walkLeft;
+                if (this.facing == facingEnum.RIGHT)
+                    this.currentAnimation = this.walkRight;
+                if (this.facing == facingEnum.UP)
+                    this.currentAnimation = this.walkUp;
+                if (this.facing == facingEnum.DOWN)
+                    this.currentAnimation = this.walkDown;
+                
+                this.currentAnimation.reset();
+                if (this.xvel != 0 || this.yvel != 0)
+                {
+                    this.currentAnimation.start();
+                }
+                this.attack = false;
+            }.bind(this);
+            
+            this.slashUp.ended = this.endAttackAnimation;
+            this.slashLeft.ended = this.endAttackAnimation;
+            this.slashDown.ended = this.endAttackAnimation;
+            this.slashRight.ended = this.endAttackAnimation;
+
+            this.beginLeft = function() {
+                this.xvel = -this.SPEED;
+                this.facing = facingEnum.LEFT;
+                this.currentAnimation = this.walkLeft;
+                this.currentAnimation.start();
+            };
+
+            this.endLeft = function() {
+                this.xvel = 0;
+                this.stopIfNotMoving();
+            };
+
+            this.beginUp = function() {
+                this.yvel = -this.SPEED;
+                this.facing = facingEnum.UP;
+                this.currentAnimation = this.walkUp;
+                this.currentAnimation.start();
+            };
+
+            this.endUp = function() {
+                this.yvel = 0;
+                this.stopIfNotMoving();
+            };
+
+            this.beginRight = function() {
+                this.xvel = this.SPEED;
+                this.facing = facingEnum.RIGHT;
+                this.currentAnimation = this.walkRight;
+                this.currentAnimation.start();
+            };
+
+            this.endRight = function() {
+                this.xvel = 0;
+                this.stopIfNotMoving();
+            };
+
+            this.beginDown = function() {
+                this.yvel = this.SPEED;
+                this.facing = facingEnum.DOWN;
+                this.currentAnimation = this.walkDown;
+                this.currentAnimation.start();
+            };
+
+            this.endDown = function() {
+                this.yvel = 0;
+                this.stopIfNotMoving();
+            };
         };
         
-        var game = function(width, height) {
+        var game = function(width, height, eventSource) {
             this.width = width;
             this.height = height;
             this.player = new player();
+            this.inputComponent = new InputComponent(eventSource, this.player);
 
             this.render = function(context) {
                 context.clearRect(0, 0, this.width, this.height);
@@ -102,35 +237,13 @@
             this.logic = function() {
                 this.player.logic();
             };
-
-            this.SPEED = 3;
-            this.keydown = (function(e) {
-                switch(e.keyCode) {
-                    case 17: this.player.attack = true; break;
-                    case 37: this.player.xvel = -this.SPEED; break;
-                    case 38: this.player.yvel = -this.SPEED; break;
-                    case 39: this.player.xvel = this.SPEED; break;
-                    case 40: this.player.yvel = this.SPEED; break;
-                }
-            }).bind(this);
-
-            this.keyup = (function(e) {
-                switch(e.keyCode) {
-                    case 17: this.player.attack = false; break;
-                    case 37: this.player.xvel = 0; break;
-                    case 38: this.player.yvel = 0; break;
-                    case 39: this.player.xvel = 0; break;
-                    case 40: this.player.yvel = 0; break;
-                }
-            }).bind(this);
-
         }
 
         var canvas = $('#canvas');
         var context = canvas[0].getContext('2d');
-        var instance = new game(canvas.width(), canvas.height());
-        $(document).keydown(instance.keydown);
-        $(document).keyup(instance.keyup);
+        
+        var instance = new game(canvas.width(), canvas.height(), $(document)[0]);
+        
         var gameloop = function() {
             setTimeout(function() { requestAnimationFrame(gameloop); }, 1000 / fps); 
             instance.render(context);
