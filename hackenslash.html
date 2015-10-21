@@ -1,8 +1,12 @@
 <html>
     <head>
         <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-        <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
-        <script src="hackenslash/InputComponent.js"></script>
+        <!--<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>-->
+        <script src="hackenslash/js/directions.js"></script>
+        <script src="hackenslash/js/InputComponent.js"></script>
+        <script src="hackenslash/js/animation.js"></script>
+        <script src="hackenslash/js/sprite.js"></script>
+        <script src="hackenslash/js/vector2.js"></script>
 		<link href='http://fonts.googleapis.com/css?family=Cinzel Decorative' rel='stylesheet' type='text/css'>
         <style>
             body { font-family: Cinzel Decorative; }
@@ -14,54 +18,14 @@
     <body>
         <h1>Hackenslash</h1>
         <canvas id="canvas" width="300" height="300"></canvas>
-        <img id="slash" src="hackenslash/female_slash.png"/>
-        <img id="walkcycle" src="hackenslash/female_walkcycle.png"/>
+        <img id="slash" src="hackenslash/img/female_slash.png"/>
+        <img id="walkcycle" src="hackenslash/img/female_walkcycle.png"/>
     </body>
 
     <script type="text/javascript">
         var fps = 30;
 
-        var animation = function(image, width, height, frames, sheetX) {
-            this.image = image;
-            this.width = width;
-            this.height = height;
-            this.frameY = this.height * sheetX;
-            this.frames = frames;
-            this.frame = 0;
-            this.speed = 0;
-            this.ended = false;
-
-            this.render = function(context, x, y) {
-                var frameX = this.frame * this.width;
-                context.drawImage(this.image, frameX, this.frameY, this.width, this.height, x, y, this.width, this.height); 
-            };
-
-            this.logic = function() {
-                this.frame += this.speed;
-
-                if (this.frame > this.frames)
-                {
-                    this.frame = 0;
-                    if (this.ended)
-                        this.ended();
-                }
-            };
-
-            this.reset = function() {
-                this.frame = 0;
-            };
-
-            this.start = function() {
-                this.speed = 1;
-            };
-
-            this.stop = function() {
-                this.speed = 0;
-                if (this.ended)
-                    this.ended();
-            };
-        }
-
+        
         // http://lpc.opengameart.org/static/lpc-style-guide/assets.html#assets-character-base
         var player = function(game) {
             var facingEnum = {
@@ -71,12 +35,11 @@
                 RIGHT : 3
             };
 
-            this.x = 0;
-            this.y = 0;
-            this.xvel = 0;
-            this.yvel = 0;
             this.attackXVel = 0;
             this.attackYVel = 0;
+            this.position = new vector2(0, 0);
+            this.velocity = new vector2(0, 0);
+            
             this.WIDTH = 64;
             this.HEIGHT = 64;
             this.attack = false;
@@ -84,65 +47,76 @@
             this.SPEED = 3;
             this.facing = facingEnum.DOWN;
 
-            this.walkUp = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 0);
-            this.walkLeft = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 1);
-            this.walkDown = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 2);
-            this.walkRight = new animation($('#walkcycle')[0], this.WIDTH, this.HEIGHT, 8, 3);
-            
-            this.slashUp = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 0);
-            this.slashLeft = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 1);
-            this.slashDown = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 2);
-            this.slashRight = new animation($('#slash')[0], this.WIDTH, this.HEIGHT, 5, 3);
-            this.currentAnimation = this.walkDown;
+            this.walkCycleAnim = document.getElementById("walkcycle");
+            this.slashAnim = document.getElementById("slash");
+            var walk_north = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 0);
+            var walk_south = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 2);
+            var walk_east = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 3);
+            var walk_west = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 1);
+            var attack_north = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 0);
+            var attack_south = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 2);
+            var attack_east = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 3);
+            var attack_west = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 1);
+
+            var playerAnimations = {
+                "north": {
+                    walk: walk_north,
+                    attack: attack_north 
+                },
+                "south": {
+                    walk: walk_south,
+                    attack: attack_south
+                },
+                "east": {
+                    walk: walk_east,
+                    attack: attack_east
+                },
+                "west": {
+                    walk: walk_west,
+                    attack: attack_west
+                },
+            };
+
+            this.sprite = new sprite(playerAnimations, this.position, this.velocity);            
 
             this.render = function(context) {
-                this.currentAnimation.render(context, this.x, this.y);
+                this.sprite.render(context);
             };
 
             this.logic = function() {
-                this.currentAnimation.logic();
+                this.sprite.logic();
 
-                this.x += this.xvel;
-                this.y += this.yvel;
-                this.x += this.attackXVel;
-                this.y += this.attackYVel;
-                if (this.x > 300-this.WIDTH) this.x = 300 - this.WIDTH;
-                if (this.x < 0) this.x = 0;
-                if (this.y > 300-this.HEIGHT) this.y = 300-this.HEIGHT;
-                if (this.y < 0) this.y = 0;
-            };
-
-            this.stopIfNotMoving = function() {
-                if (this.xvel == 0 && this.yvel == 0)
-                    this.currentAnimation.stop();
+                this.position.x += this.velocity.x;
+                this.position.y += this.velocity.y;
+                this.position.x += this.attackXVel;
+                this.position.y += this.attackYVel;
+                //if (this.position.x > 300-this.WIDTH) this.x = 300 - this.WIDTH;
+                //if (this.x < 0) this.x = 0;
+                //if (this.y > 300-this.HEIGHT) this.y = 300-this.HEIGHT;
+                //if (this.y < 0) this.y = 0;
             };
 
             this.beginAttack = function() {
+                this.sprite.beginAttack();
                 if (this.facing == facingEnum.LEFT)
                 {
-                    this.currentAnimation = this.slashLeft;
                     this.attackXVel = -this.ATTACK_SPEED;
                 }
 
                 if (this.facing == facingEnum.RIGHT)
                 {
-                    this.currentAnimation = this.slashRight;
                     this.attackXVel = this.ATTACK_SPEED;
                 }
 
                 if (this.facing == facingEnum.UP)
                 {
-                    this.currentAnimation = this.slashUp;
                     this.attackYVel = -this.ATTACK_SPEED;
                 }
 
                 if (this.facing == facingEnum.DOWN)
                 {
-                    this.currentAnimation = this.slashDown;
                     this.attackYVel = this.ATTACK_SPEED;
                 }
-                this.currentAnimation.reset();
-                this.currentAnimation.start();
                 this.attack = true;
             };
 
@@ -150,7 +124,7 @@
             };
 
             this.endAttackAnimation = function() {
-                this.attackXVel = 0;
+                /*this.attackXVel = 0;
                 this.attackYVel = 0;
                 if (this.facing == facingEnum.LEFT) 
                     this.currentAnimation = this.walkLeft;
@@ -162,64 +136,60 @@
                     this.currentAnimation = this.walkDown;
                 
                 this.currentAnimation.reset();
-                if (this.xvel != 0 || this.yvel != 0)
+                if (this.velocity.x != 0 || this.velocity.y != 0)
                 {
                     this.currentAnimation.start();
                 }
-                this.attack = false;
+                this.attack = false;*/
             }.bind(this);
             
-            this.slashUp.ended = this.endAttackAnimation;
+            /*this.slashUp.ended = this.endAttackAnimation;
             this.slashLeft.ended = this.endAttackAnimation;
             this.slashDown.ended = this.endAttackAnimation;
-            this.slashRight.ended = this.endAttackAnimation;
+            this.slashRight.ended = this.endAttackAnimation;*/
 
             this.beginLeft = function() {
-                this.xvel = -this.SPEED;
+                this.velocity.x = -this.SPEED;
+                this.sprite.beginLeft();
                 this.facing = facingEnum.LEFT;
-                this.currentAnimation = this.walkLeft;
-                this.currentAnimation.start();
             };
 
             this.endLeft = function() {
-                this.xvel = 0;
-                this.stopIfNotMoving();
+                this.velocity.x = 0;
+                this.sprite.endLeft();
             };
 
             this.beginUp = function() {
-                this.yvel = -this.SPEED;
+                this.velocity.y = -this.SPEED;
                 this.facing = facingEnum.UP;
-                this.currentAnimation = this.walkUp;
-                this.currentAnimation.start();
+                this.sprite.beginUp();
             };
 
             this.endUp = function() {
-                this.yvel = 0;
-                this.stopIfNotMoving();
+                this.velocity.y = 0;
+                this.sprite.endUp();
             };
 
             this.beginRight = function() {
-                this.xvel = this.SPEED;
+                this.velocity.x = this.SPEED;
                 this.facing = facingEnum.RIGHT;
-                this.currentAnimation = this.walkRight;
-                this.currentAnimation.start();
+                this.sprite.beginRight();
             };
 
             this.endRight = function() {
-                this.xvel = 0;
-                this.stopIfNotMoving();
+                this.velocity.x = 0;
+                this.sprite.endRight();
             };
 
             this.beginDown = function() {
-                this.yvel = this.SPEED;
+                this.velocity.y = this.SPEED;
                 this.facing = facingEnum.DOWN;
-                this.currentAnimation = this.walkDown;
-                this.currentAnimation.start();
+                this.sprite.beginDown();
             };
 
             this.endDown = function() {
-                this.yvel = 0;
-                this.stopIfNotMoving();
+                this.velocity.y = 0;
+                this.sprite.endDown();
             };
         };
         
@@ -239,10 +209,10 @@
             };
         }
 
-        var canvas = $('#canvas');
-        var context = canvas[0].getContext('2d');
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext('2d');
         
-        var instance = new game(canvas.width(), canvas.height(), $(document)[0]);
+        var instance = new game(canvas.width, canvas.height, document);
         
         var gameloop = function() {
             setTimeout(function() { requestAnimationFrame(gameloop); }, 1000 / fps); 
