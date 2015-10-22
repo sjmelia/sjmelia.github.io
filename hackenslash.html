@@ -3,7 +3,7 @@
         <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
         <!--<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>-->
         <script src="hackenslash/js/directions.js"></script>
-        <script src="hackenslash/js/InputComponent.js"></script>
+        <script src="hackenslash/js/userInputBehaviour.js"></script>
         <script src="hackenslash/js/animation.js"></script>
         <script src="hackenslash/js/sprite.js"></script>
         <script src="hackenslash/js/vector2.js"></script>
@@ -28,176 +28,97 @@
         
         // http://lpc.opengameart.org/static/lpc-style-guide/assets.html#assets-character-base
         var player = function(game) {
-            var facingEnum = {
-                UP : 0,
-                DOWN : 1,
-                LEFT : 2,
-                RIGHT : 3
-            };
-
-            this.attackXVel = 0;
-            this.attackYVel = 0;
+            this.direction = directions.SOUTH;
             this.position = new vector2(0, 0);
             this.velocity = new vector2(0, 0);
-            
+            this.attackVelocity = new vector2(0, 0);
+            this.attacking = false;
             this.WIDTH = 64;
             this.HEIGHT = 64;
-            this.attack = false;
-            this.ATTACK_SPEED = 5;
-            this.SPEED = 3;
-            this.facing = facingEnum.DOWN;
 
-            this.walkCycleAnim = document.getElementById("walkcycle");
-            this.slashAnim = document.getElementById("slash");
-            var walk_north = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 0);
-            var walk_south = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 2);
-            var walk_east = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 3);
-            var walk_west = new animation(this.walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 1);
-            var attack_north = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 0);
-            var attack_south = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 2);
-            var attack_east = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 3);
-            var attack_west = new animation(this.slashAnim, this.WIDTH, this.HEIGHT, 5, 1);
+            this.init = function() {
+                var walkCycleAnim = document.getElementById("walkcycle");
+                var slashAnim = document.getElementById("slash");
+                var walk_north = new animation(walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 0);
+                var walk_south = new animation(walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 2);
+                var walk_east = new animation(walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 3);
+                var walk_west = new animation(walkCycleAnim, this.WIDTH, this.HEIGHT, 8, 1);
+                var attack_north = new animation(slashAnim, this.WIDTH, this.HEIGHT, 5, 0);
+                var attack_south = new animation(slashAnim, this.WIDTH, this.HEIGHT, 5, 2);
+                var attack_east = new animation(slashAnim, this.WIDTH, this.HEIGHT, 5, 3);
+                var attack_west = new animation(slashAnim, this.WIDTH, this.HEIGHT, 5, 1);
 
-            var playerAnimations = {
-                "north": {
-                    walk: walk_north,
-                    attack: attack_north 
-                },
-                "south": {
-                    walk: walk_south,
-                    attack: attack_south
-                },
-                "east": {
-                    walk: walk_east,
-                    attack: attack_east
-                },
-                "west": {
-                    walk: walk_west,
-                    attack: attack_west
-                },
+                var playerAnimations = {
+                    "north": {
+                        walk: walk_north,
+                        attack: attack_north 
+                    },
+                    "south": {
+                        walk: walk_south,
+                        attack: attack_south
+                    },
+                    "east": {
+                        walk: walk_east,
+                        attack: attack_east
+                    },
+                    "west": {
+                        walk: walk_west,
+                        attack: attack_west
+                    },
+                };
+
+                this.sprite = new sprite(this, playerAnimations);
+                this.behaviour = new userInputBehaviour(this);
+
+                this.attackVelocity.changed = this.onVelocityChanged;
+                this.velocity.changed = this.onVelocityChanged;
             };
 
-            this.sprite = new sprite(playerAnimations, this.position, this.velocity);            
+            this.onAttackVelocityChanged = function() {
+            };
 
+            this.onVelocityChanged = function() {
+                this.sprite.onVelocityChanged();
+            }.bind(this);
+                        
+            this.setAttacking = function(value) {
+                var flag = this.attacking != value;
+                this.attacking = value;
+                if (flag) {
+                    this.behaviour.onAttackChanged();
+                    this.sprite.onAttackChanged();
+                }
+            };
+
+            this.setDirection = function(value) {
+                var flag = this.direction != value;
+                this.direction = value;
+                if (flag) {
+                    this.sprite.onDirectionChanged();
+                }
+            };
+            
             this.render = function(context) {
                 this.sprite.render(context);
             };
 
             this.logic = function() {
                 this.sprite.logic();
+                this.behaviour.logic();
 
-                this.position.x += this.velocity.x;
-                this.position.y += this.velocity.y;
-                this.position.x += this.attackXVel;
-                this.position.y += this.attackYVel;
                 //if (this.position.x > 300-this.WIDTH) this.x = 300 - this.WIDTH;
                 //if (this.x < 0) this.x = 0;
                 //if (this.y > 300-this.HEIGHT) this.y = 300-this.HEIGHT;
                 //if (this.y < 0) this.y = 0;
             };
 
-            this.beginAttack = function() {
-                this.sprite.beginAttack();
-                if (this.facing == facingEnum.LEFT)
-                {
-                    this.attackXVel = -this.ATTACK_SPEED;
-                }
-
-                if (this.facing == facingEnum.RIGHT)
-                {
-                    this.attackXVel = this.ATTACK_SPEED;
-                }
-
-                if (this.facing == facingEnum.UP)
-                {
-                    this.attackYVel = -this.ATTACK_SPEED;
-                }
-
-                if (this.facing == facingEnum.DOWN)
-                {
-                    this.attackYVel = this.ATTACK_SPEED;
-                }
-                this.attack = true;
-            };
-
-            this.endAttack = function() {
-            };
-
-            this.endAttackAnimation = function() {
-                /*this.attackXVel = 0;
-                this.attackYVel = 0;
-                if (this.facing == facingEnum.LEFT) 
-                    this.currentAnimation = this.walkLeft;
-                if (this.facing == facingEnum.RIGHT)
-                    this.currentAnimation = this.walkRight;
-                if (this.facing == facingEnum.UP)
-                    this.currentAnimation = this.walkUp;
-                if (this.facing == facingEnum.DOWN)
-                    this.currentAnimation = this.walkDown;
-                
-                this.currentAnimation.reset();
-                if (this.velocity.x != 0 || this.velocity.y != 0)
-                {
-                    this.currentAnimation.start();
-                }
-                this.attack = false;*/
-            }.bind(this);
-            
-            /*this.slashUp.ended = this.endAttackAnimation;
-            this.slashLeft.ended = this.endAttackAnimation;
-            this.slashDown.ended = this.endAttackAnimation;
-            this.slashRight.ended = this.endAttackAnimation;*/
-
-            this.beginLeft = function() {
-                this.velocity.x = -this.SPEED;
-                this.sprite.beginLeft();
-                this.facing = facingEnum.LEFT;
-            };
-
-            this.endLeft = function() {
-                this.velocity.x = 0;
-                this.sprite.endLeft();
-            };
-
-            this.beginUp = function() {
-                this.velocity.y = -this.SPEED;
-                this.facing = facingEnum.UP;
-                this.sprite.beginUp();
-            };
-
-            this.endUp = function() {
-                this.velocity.y = 0;
-                this.sprite.endUp();
-            };
-
-            this.beginRight = function() {
-                this.velocity.x = this.SPEED;
-                this.facing = facingEnum.RIGHT;
-                this.sprite.beginRight();
-            };
-
-            this.endRight = function() {
-                this.velocity.x = 0;
-                this.sprite.endRight();
-            };
-
-            this.beginDown = function() {
-                this.velocity.y = this.SPEED;
-                this.facing = facingEnum.DOWN;
-                this.sprite.beginDown();
-            };
-
-            this.endDown = function() {
-                this.velocity.y = 0;
-                this.sprite.endDown();
-            };
+            this.init();
         };
         
-        var game = function(width, height, eventSource) {
+        var game = function(width, height) {
             this.width = width;
             this.height = height;
             this.player = new player();
-            this.inputComponent = new InputComponent(eventSource, this.player);
 
             this.render = function(context) {
                 context.clearRect(0, 0, this.width, this.height);
@@ -212,7 +133,7 @@
         var canvas = document.getElementById("canvas");
         var context = canvas.getContext('2d');
         
-        var instance = new game(canvas.width, canvas.height, document);
+        var instance = new game(canvas.width, canvas.height);
         
         var gameloop = function() {
             setTimeout(function() { requestAnimationFrame(gameloop); }, 1000 / fps); 
