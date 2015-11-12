@@ -7,6 +7,7 @@
         <script src="hackenslash/js/animation.js"></script>
         <script src="hackenslash/js/sprite.js"></script>
         <script src="hackenslash/js/vector2.js"></script>
+        <script src="hackenslash/js/clampToPlayAreaBehaviour.js"></script>
 		<link href='http://fonts.googleapis.com/css?family=Cinzel Decorative' rel='stylesheet' type='text/css'>
         <style>
             body { font-family: Cinzel Decorative; }
@@ -69,6 +70,7 @@
 
                 this.sprite = new sprite(this, playerAnimations);
                 this.behaviour = new userInputBehaviour(this);
+                this.clampBehaviour = new clampToPlayAreaBehaviour(this, 300, 300);
 
                 this.attackVelocity.changed = this.onVelocityChanged;
                 this.velocity.changed = this.onVelocityChanged;
@@ -103,13 +105,9 @@
             };
 
             this.logic = function() {
+                this.clampBehaviour.onPositionChanged();
                 this.sprite.logic();
                 this.behaviour.logic();
-
-                //if (this.position.x > 300-this.WIDTH) this.x = 300 - this.WIDTH;
-                //if (this.x < 0) this.x = 0;
-                //if (this.y > 300-this.HEIGHT) this.y = 300-this.HEIGHT;
-                //if (this.y < 0) this.y = 0;
             };
 
             this.init();
