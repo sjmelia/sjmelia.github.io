@@ -31,8 +31,10 @@
         document.addEventListener("DOMContentLoaded", 
             WebFont.load({
                 active: function() {
-                    var invaders = new game();
-                    invaders.start();
+                    setTimeout(function() {
+                        var invaders = new game();
+                        invaders.start();
+                    }, 1000);
                 },
 
                 google: {
