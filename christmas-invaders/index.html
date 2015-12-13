@@ -1,27 +1,6 @@
 <html>
     <head>
         <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-        <script src="js/player.js"></script>
-        <script src="js/enemy.js"></script>
-        <script src="js/scoreboard.js"></script>
-        <script src="js/game.js"></script>
-        
-        <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>
-        <script>
-            document.addEventListener("DOMContentLoaded", 
-                WebFont.load({
-                    active: function() {
-                        var invaders = new game();
-                        invaders.start();
-                    },
-
-                    google: {
-                        families: ['Press Start 2P']
-                    }
-                })
-            );
-        </script>
-
         <style>
             body 
             { 
@@ -42,6 +21,24 @@
         <img id="player" src="img/player.png" />
     </body>
 
-    <script type="text/javascript">
-            </script>
+    <script src="js/player.js"></script>
+    <script src="js/enemy.js"></script>
+    <script src="js/scoreboard.js"></script>
+    <script src="js/game.js"></script>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", 
+            WebFont.load({
+                active: function() {
+                    var invaders = new game();
+                    invaders.start();
+                },
+
+                google: {
+                    families: ['Press Start 2P']
+                }
+            })
+        );
+    </script>
 </html>
