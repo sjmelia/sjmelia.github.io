@@ -143,8 +143,8 @@ var Accelerometer = function() {
 			this.xvel = 0;
 			this.yvel = 0;
 			this.image = $('#car');
-			this.HEIGHT = this.image.height();
-			this.WIDTH = this.image.width();
+			this.HEIGHT = 100;
+			this.WIDTH = 75;
 			this.render = function(context) {
 				context.drawImage(this.image[0], this.x, this.y);
 			};
