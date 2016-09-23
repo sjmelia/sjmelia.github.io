@@ -1,0 +1,390 @@
+<html>
+	<head>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+		<link href='http://fonts.googleapis.com/css?family=Modak' rel='stylesheet' type='text/css'>
+		<style>
+			#canvas { border: 1px black solid; }
+			#car { display: none; }
+			#boss { display: none; }
+			#motor { display: none; }
+			#crash { display: none; }
+			body { font-family: Modak; }
+        </style>
+	</head>
+	<body>
+		<h1>RTA!</h1>
+		<canvas id="canvas" width="300" height="300"></canvas>
+
+		<img id="boss" src="data:image/png;base64,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"/>
+        <!-- http://www.freesound.org/people/qubodup/sounds/151624/-->
+        <audio id="crash" controls src="crash.wav"/>
+            
+        <audio id="motor" controls src="Bullitt - Remastered.mp3" loop=true/>
+
+        <img id="car" src="data:image/png;base64,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"/>
+    </body>
+
+	<script type="text/javascript">
+
+/**
+ * An accelerometer object for detecting device orientation
+ *  and motion (if supported)
+ * 
+ * Chrome 7+, Firefox 6+, IE11+, iOS Safari 4.0+, Android Browser 3.0, Blackberry 10.0
+ *   http://caniuse.com/#feat=deviceorientation
+ *   
+ *   The DeviceOrientationEvent.alpha value represents the motion of the device around the z axis,
+ *    represented in degrees with values ranging from 0 to 360.
+ *    
+ *    The DeviceOrientationEvent.beta value represents the motion of the device around the x axis,
+ *    represented in degrees with values ranging from -180 to 180. 
+ *    This represents a front to back motion of the device.
+ *    
+ *    The DeviceOrientationEvent.gamma value represents the motion of the device around the y axis,
+ *    represented in degrees with values ranging from -90 to 90. 
+ *    This represents a left to right motion of the device.
+ *    
+ * @property {boolean} supported If orientation events are supported in the current context
+ */
+ 
+var Accelerometer = function() {
+  var self = this;
+  self.supported = false;
+  var absolute = null,
+      alpha = null,
+      beta = null,
+      gamma = null,
+      acceleration = null,
+      accelerationIncludingGravity = null,
+      rotationRate = null,
+      interval = null;
+      
+  self.getAlpha = function() {
+    return (alpha !== null) ? alpha : 0;
+  };
+  self.getBeta = function() {
+    return (beta !== null) ? beta : 0;
+  };
+  self.getGamma = function() {
+    return (gamma !== null) ? gamma : 0;
+  };
+  self.getAcceleration = function() {
+    return (acceleration !== null) ? acceleration : 0;
+  };
+  self.getAccelerationIncludingGravity = function() {
+    return (accelerationIncludingGravity !== null) ? accelerationIncludingGravity : 0;
+  };
+  self.getRotationRate = function() {
+    return (rotationRate !== null) ? rotationRate : 0;
+  };
+  self.getInterval = function() {
+    return (interval !== null) ? interval : 0;
+  };
+ 
+  if (!!window.DeviceMotionEvent) {
+    window.addEventListener("devicemotion", handleMotion, true);
+    self.supported = true;
+  }
+  if (!!window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientation", handleOrientation, true);
+    self.supported = true;
+  }
+ 
+  window.addEventListener("compassneedscalibration", function(event) {
+    self.supported = true;
+    alert('Your compass needs calibrating!');
+    event.preventDefault();
+  }, true);
+ 
+  function handleOrientation(event) {
+    absolute = event.absolute;
+    alpha = event.alpha;
+    beta = event.beta;
+    gamma = event.gamma;
+  }
+  function handleMotion(event) {
+    acceleration = accelerationIncludingGravity = rotationRate = {};
+    acceleration.x = event.acceleration.x;
+    acceleration.y = event.acceleration.y;
+    acceleration.z = event.acceleration.z;
+    accelerationIncludingGravity.x = event.accelerationIncludingGravity.x;
+    accelerationIncludingGravity.y = event.accelerationIncludingGravity.y;
+    accelerationIncludingGravity.z = event.accelerationIncludingGravity.z;
+    rotationRate.alpha = event.rotationRate.alpha;
+    rotationRate.beta = event.rotationRate.beta;
+    rotationRate.gamma = event.rotationRate.gamma;
+    interval = event.interval;
+  }
+};
+
+
+
+		// shim layer with setTimeout fallback
+		window.requestAnimFrame = (function(){
+		  return  window.requestAnimationFrame       ||
+		          window.webkitRequestAnimationFrame ||
+		          window.mozRequestAnimationFrame    ||
+		          function( callback ){
+		            window.setTimeout(callback, 1000 / 60);
+		          };
+		})();
+
+		var fps = 30;
+		var intersectRect = function(x1, y1, w1, h1, x2, y2, w2, h2) {
+			return !(x2 > x1+w1 ||
+				x2+w2 < x1 ||
+				y2 > y1+h1 ||
+			       	y2+h2 < y1);
+		};	
+
+		var player = function(game) {
+			this.game = game;
+			this.xvel = 0;
+			this.yvel = 0;
+			this.image = $('#car');
+			this.HEIGHT = this.image.height();
+			this.WIDTH = this.image.width();
+			this.render = function(context) {
+				context.drawImage(this.image[0], this.x, this.y);
+			};
+			this.reset = function() {
+                this.x = this.game.width/2 - this.WIDTH/2;
+			    this.y = this.game.height-100;
+			};
+            
+			this.logic = function() {
+				if (intersectRect(this.x, this.y, this.WIDTH, this.HEIGHT,
+							this.game.exit.x, this.game.exit.y,
+							this.game.exit.image.width(),
+							this.game.exit.image.height()))
+				{
+					this.game.win();
+				}
+
+				this.game.bosses.forEach((function(boss) {
+					if (intersectRect(this.x, this.y, this.WIDTH, this.HEIGHT,
+								boss.x, boss.y,
+								boss.image.width(),
+								boss.image.height()))
+					{
+						this.game.lose();
+					}
+				}).bind(this));
+
+				this.x += this.xvel;
+				this.y += this.yvel;
+				this.x = Math.max(this.x, 0);
+				this.y = Math.max(this.y, 0);
+				this.x = Math.min(this.x, this.game.width-this.WIDTH);
+				this.y = Math.min(this.y, this.game.height-this.HEIGHT);
+			};
+
+            this.reset();
+		};
+		var exit = function(game) {
+			this.game = game;
+			this.image = $('#exit');
+			this.x = this.game.width - this.image.width();
+			this.y = this.game.height - this.image.height();
+			this.xvel = 0;
+			this.yvel = 0;
+			this.frame = 0;
+			this.PERIOD = 15;
+			this.SPEED = 4;
+			this.render = function(context) {
+				context.drawImage(this.image[0], this.x, this.y);
+			};
+			this.reset = function() {
+				this.x = this.game.width - this.image.width();
+				this.y = this.game.height - this.image.height();
+			};
+			this.logic = function() {
+				if (this.frame == 0) {
+					this.xvel = Math.random() < 0.5 ? -this.SPEED : this.SPEED;
+					this.yvel = Math.random() < 0.5 ? -this.SPEED : this.SPEED;
+				}
+				
+				this.frame++;
+				if (this.frame == this.PERIOD)
+				{
+					this.frame = 0;
+				}
+
+				this.x += this.xvel;
+				this.y += this.yvel;
+				this.x = Math.max(this.x, 0);
+				this.y = Math.max(this.y, 0);
+				this.x = Math.min(this.x, this.game.width-this.image.width());
+				this.y = Math.min(this.y, this.game.height-this.image.height());
+				
+			};
+		};
+
+		var boss = function(game) {
+			this.game = game;
+			this.image = $('#boss');
+			this.x = Math.random() * this.game.width;
+			this.y = -this.image.height() - (Math.random() * this.game.height/2);
+			this.xvel = 0;
+			this.yvel = 0;
+			this.frame = 0;
+			this.ROTATEPERIOD = 6;
+			this.rotateframe = 0;
+			this.rotation = 0;
+			this.PERIOD = 15;
+			this.SPEED = 2;
+			this.render = function(context) {
+				context.save();
+				context.translate(this.x+this.image.width()/2, this.y+this.image.height()/2);
+				context.rotate(this.rotation*Math.PI/180);
+				context.drawImage(this.image[0], -this.image.width()/2, -this.image.height()/2);
+				context.restore();
+			};
+			this.reset = function() {
+                this.x = Math.random() * this.game.width;
+			    this.y = -this.image.height() - (Math.random() * this.game.height/2);
+
+			};
+			this.logic = function() {
+                this.yvel = this.SPEED;
+				/*if (this.frame == 0) {
+					this.xvel = Math.random() < 0.5 ? -this.SPEED : this.SPEED;
+					this.yvel = Math.random() < 0.5 ? -this.SPEED : this.SPEED;
+				}
+				if (this.rotateframe == 0)
+				{
+					this.rotation = Math.random() * 360;
+				}
+
+				this.rotateframe++;
+				this.frame++;
+				if (this.frame == this.PERIOD)
+				{
+					this.frame = 0;
+				}
+				if (this.rotateframe == this.ROTATEPERIOD)
+				{
+					this.rotateframe = 0;
+				}*/
+
+				this.x += this.xvel;
+				this.y += this.yvel;
+				//this.x = Math.max(this.x, 0);
+				//this.y = Math.max(this.y, 0);
+				/*this.x = Math.min(this.x, this.game.width-this.image.width());
+				this.y = Math.min(this.y, this.game.height-this.image.height());*/
+
+                if (this.y > this.game.height) {
+                    this.y = 0;
+                    this.x = Math.random() * this.game.width;
+                    this.game.win();
+                }
+				
+			};
+		};
+
+		var game = function(width, height) {
+			this.height = height;
+			this.width = width;
+			this.player = new player(this);
+			this.exit = new exit(this);
+			this.bosses = [new boss(this)];
+			this.SPEED = 2;
+			this.wonCountdown = 0;
+			this.level = 1;
+			this.Accelerometer = new Accelerometer();
+			this.render = function(context) {
+				context.clearRect(0, 0, this.width, this.height);
+				if (this.wonCountdown > 0)
+				{
+					context.font="14px Bangers";
+					context.fillStyle = "black";
+					context.fillText("You got out of the room! Level " + this.level,30, 30);
+				}
+				else if (this.lostCountdown > 0)
+				{
+					context.font="20px Bangers";
+					context.fillStyle = "red";
+					context.fillText("BOOM big crash you lose!!", 30, 30);
+				}
+				else
+				{
+					//this.exit.render(context);
+					this.bosses.forEach(function(boss) { boss.render(context) });
+					this.player.render(context);
+					
+				}
+			};
+			this.reset = function() {
+				this.player.reset();
+				this.exit.reset();
+				this.bosses.forEach(function(boss) { boss.reset() });
+			}
+			this.win = function() {
+				this.level++;
+				this.bosses.push(new boss(this));
+				//this.wonCountdown = 90;
+				//this.reset();
+			};
+			this.lose = function() {
+				$('#crash')[0].play();
+				this.bosses = [new boss(this)];
+				this.level = 0;
+				this.lostCountdown = 90;
+				this.reset();
+			};
+			this.logic = function() {
+				if (this.wonCountdown > 0)
+				{
+					this.wonCountdown--;
+				}
+				else if (this.lostCountdown > 0)
+				{
+					this.lostCountdown--;
+				}
+				else
+				{
+					
+					if (this.Accelerometer.getBeta() > 0) this.player.yvel = this.SPEED;
+					if (this.Accelerometer.getBeta() < 0) this.player.yvel = -this.SPEED;
+					if (this.Accelerometer.getGamma() > 0) this.player.xvel = this.SPEED;
+					if (this.Accelerometer.getGamma() < 0) this.player.xvel = -this.SPEED;
+
+					this.player.logic();	
+					//this.exit.logic();
+					this.bosses.forEach(function(boss) { boss.logic() });
+				}
+			};
+			this.keydown = (function(e) {
+				switch(e.keyCode) {
+					case 37: this.player.xvel = -this.SPEED; break;
+					case 38: this.player.yvel = -this.SPEED; break;
+					case 39: this.player.xvel = this.SPEED; break;
+					case 40: this.player.yvel = this.SPEED; break;
+				}
+			}).bind(this);
+			this.keyup = (function(e) {
+				switch(e.keyCode) {
+					case 37: this.player.xvel = 0; break;
+					case 38: this.player.yvel = 0; break;
+					case 39: this.player.xvel = 0; break;
+					case 40: this.player.yvel = 0; break;
+				}
+			}).bind(this);;
+		};
+
+		var canvas = $('#canvas');
+		var context = canvas[0].getContext('2d');
+		var gameInstance = new game(canvas.width(), canvas.height());
+		$(document).keydown(gameInstance.keydown);
+		$(document).keyup(gameInstance.keyup);
+		var animLoop = (function (){
+			setTimeout(function() { requestAnimFrame(animLoop); }, 1000 / fps);
+			gameInstance.logic();
+			gameInstance.render(context);
+		});
+		animLoop();
+		$('#motor')[0].play();
+	</script>
+</html>
